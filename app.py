@@ -3,7 +3,7 @@ Smart Crop and Fertilizer Advisor - AI Expert System
 Flask Web Server integrating Machine Learning Crop Prediction with Rule-Based Fertilizer Advising.
 Styled with AgriCulture Theme System (Bootstrap 5).
 """
-
+ 
 import os
 import sys
 import io
@@ -41,9 +41,9 @@ kb = KnowledgeBase()
 predictor = CropPredictor()
 engine = InferenceEngine(kb)
 db = DatabaseManager()
-
+ 
 # --- WEB PAGE ROUTES ---
-
+ 
 @app.route('/')
 def home():
     """Serves main AgriCulture interactive landing page."""
@@ -62,12 +62,12 @@ def advisor():
 def rotation():
     """Serves Crop Recommendation on the basis of Soil Condition, Time/Season, Temperature, and Harvest Gap."""
     return render_template('rotation.html')
-
+ 
 @app.route('/about')
 def about():
     """Redirects to /rotation as System Architecture was replaced with Crop Rotation & Scheduling."""
     return redirect(url_for('rotation'))
-
+ 
 @app.route('/knowledge')
 def knowledge():
     """Serves knowledge base browser (22 crops, production rules, fertilizer chemistry)."""
@@ -77,14 +77,14 @@ def knowledge():
         rules=kb.rules,
         fertilizers=kb.fertilizers
     )
-
+ 
 @app.route('/history')
 def history():
     """Serves historical consultation records and audit log stored in SQLite."""
     records = db.fetch_history(limit=100)
     stats = db.get_statistics()
     return render_template('history.html', history=records, stats=stats)
-
+ 
 @app.route('/report/<int:rec_id>')
 def report(rec_id):
     """Serves printable official farm advisory report for a specific consultation."""
@@ -93,9 +93,9 @@ def report(rec_id):
         return "<h3>Consultation record not found</h3><a href='/history'>Return to History</a>", 404
     crop_info = kb.get_crop_requirements(record.get('predicted_crop', ''))
     return render_template('report.html', record=record, crop_info=crop_info)
-
+ 
 # --- STATIC ASSET COMPATIBILITY ROUTE ---
-
+ 
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
     """Direct route alias for /assets/ to support AgriCulture template paths."""
@@ -104,9 +104,9 @@ def serve_assets(filename):
         return send_from_directory(static_assets, filename)
     fallback_assets = os.path.join(app.root_path, 'assets')
     return send_from_directory(fallback_assets, filename)
-
+ 
 # --- REST API ENDPOINTS ---
-
+ 
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
     """
@@ -122,7 +122,7 @@ def api_predict():
         data = request.get_json(silent=True) or request.form.to_dict() or {}
         if not data:
             return jsonify({"error": "No input payload provided."}), 400
-
+ 
         # Construct and validate SoilInput
         soil = SoilInput(
             N=float(data.get('N', 0)),
@@ -133,20 +133,20 @@ def api_predict():
             temperature=float(data.get('temperature', 25)),
             humidity=float(data.get('humidity', 70))
         )
-
+ 
         valid, err = soil.validate()
         if not valid:
             return jsonify({"error": err}), 400
-
+ 
         # 1. ML Crop Prediction
         best_crop = predictor.predict_crop(soil)
         top_crops = predictor.top_n_crops(soil, n=3)
         conf = predictor.confidence(soil)
-
+ 
         # 2. Rule-Based Fertilizer Inference & Explanation Facility
         rec = engine.fire_rules(soil, best_crop, top_crops)
         rec_report = rec.to_report()
-
+ 
         # Enrich with temporal / harvest gap context
         harvest_gap_days = int(data.get('harvest_gap_days', 90))
         season_time = data.get('season_time', 'Kharif')
@@ -168,12 +168,12 @@ def api_predict():
                 'rotation_role': crop_reqs.get('rotation_role', 'Standard Crop'),
                 'rotation_benefits': crop_reqs.get('rotation_benefits', '')
             }
-
+ 
         # 3. Save into SQLite database history
         farmer_name = data.get('farmer_name', 'Farmer')
         location = data.get('location', 'Farm Plot #1')
         soil_type = data.get('soil_type', 'Loamy')
-
+ 
         rec_id = db.save_history(
             farmer_name=farmer_name,
             location=location,
@@ -182,7 +182,7 @@ def api_predict():
             recommendation_report=rec_report,
             confidence=conf
         )
-
+ 
         return jsonify({
             "status": "success",
             "consultation_id": rec_id,
@@ -190,10 +190,10 @@ def api_predict():
             "confidence": conf,
             "recommendation": rec_report
         }), 200
-
+ 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+ 
 @app.route('/api/recommend-rotation', methods=['POST'])
 def api_recommend_rotation():
     """
@@ -212,7 +212,7 @@ def api_recommend_rotation():
         harvest_gap_days = int(data.get('harvest_gap_days', 75))
         previous_crop = data.get('previous_crop', 'Rice (Paddy)')
         ph = float(data.get('ph', 6.5))
-
+ 
         result = engine.recommend_crop_rotation(
             soil_condition=soil_condition,
             time_of_year=time_of_year,
@@ -224,13 +224,13 @@ def api_recommend_rotation():
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+ 
 @app.route('/api/history', methods=['GET'])
 def api_history():
     """Fetches consultation records or exports to CSV."""
     records = db.fetch_history(limit=200)
     export_format = request.args.get('format', '').lower()
-
+ 
     if export_format == 'csv':
         si = io.StringIO()
         writer = csv.writer(si)
@@ -253,9 +253,9 @@ def api_history():
             mimetype="text/csv",
             headers={"Content-Disposition": "attachment;filename=agritech_consultations.csv"}
         )
-
+ 
     return jsonify({"history": records}), 200
-
+ 
 @app.route('/api/history/<int:rec_id>', methods=['GET'])
 def api_get_record(rec_id):
     """Fetches single consultation record by ID."""
@@ -263,23 +263,23 @@ def api_get_record(rec_id):
     if not rec:
         return jsonify({"error": "Record not found"}), 404
     return jsonify({"record": rec}), 200
-
+ 
 @app.route('/api/history/<int:rec_id>', methods=['DELETE'])
 def api_delete_record(rec_id):
     """Deletes consultation record by ID."""
     success = db.delete_history(rec_id)
     return jsonify({"success": success}), 200
-
+ 
 @app.route('/api/stats', methods=['GET'])
 def api_stats():
     """Returns database summary statistics for dashboard metrics."""
     return jsonify(db.get_statistics()), 200
-
+ 
 @app.route('/api/knowledge', methods=['GET'])
 def api_knowledge():
     """Returns complete knowledge base in JSON format."""
     return Response(kb.to_json(), mimetype='application/json')
-
+ 
 @app.route('/api/retrain', methods=['POST'])
 def api_retrain():
     """Retrains models and updates saved crop_model.pkl."""
@@ -299,7 +299,7 @@ def api_retrain():
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+ 
 if __name__ == '__main__':
     import sys
     import socket
@@ -307,7 +307,7 @@ if __name__ == '__main__':
         sys.stdout.reconfigure(encoding='utf-8')
     except Exception:
         pass
-
+ 
     def get_local_ip():
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -317,10 +317,10 @@ if __name__ == '__main__':
             return ip
         except Exception:
             return "127.0.0.1"
-
+ 
     port = int(os.environ.get('PORT', 5000))
     local_ip = get_local_ip()
-
+ 
     print("\n=======================================================")
     print(" [AgriCulture] Smart Crop & Fertilizer Advisor Expert System")
     print(f" * Local PC Browser:   http://127.0.0.1:{port}")
@@ -328,4 +328,4 @@ if __name__ == '__main__':
     print(" (Open Mobile Phone Link in your phone's Chrome/Safari on same Wi-Fi)")
     print("=======================================================\n")
     app.run(host='0.0.0.0', port=port, debug=False)
-
+ 
