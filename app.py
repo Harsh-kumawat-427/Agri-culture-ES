@@ -5,11 +5,22 @@ Styled with AgriCulture Theme System (Bootstrap 5).
 """
 
 import os
+import sys
 import io
 import csv
 import json
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response, redirect, url_for
-from flask_cors import CORS
+
+try:
+    from flask_cors import CORS
+except ImportError:
+    def CORS(a):
+        return a
+
+# Ensure current directory is in sys.path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 from crop_expert_system.knowledge_base import KnowledgeBase
 from crop_expert_system.predictor import CropPredictor, SoilInput
@@ -17,8 +28,12 @@ from crop_expert_system.inference_engine import InferenceEngine
 from crop_expert_system.database import DatabaseManager
 from crop_expert_system.train_model import ModelTrainer
 
-# Initialize Flask Application
-app = Flask(__name__, static_folder='static', template_folder='templates')
+# Initialize Flask Application with absolute template and static paths for Vercel/serverless support
+app = Flask(
+    __name__,
+    static_folder=os.path.join(BASE_DIR, 'static'),
+    template_folder=os.path.join(BASE_DIR, 'templates')
+)
 CORS(app)
 
 # Initialize Core Expert System Engines
