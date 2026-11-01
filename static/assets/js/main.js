@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('mobile-nav-open');
     };
 
-    // Toggle button handler (Click & Touch)
+    // Toggle button handler
     toggleBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -101,10 +101,25 @@ document.addEventListener('DOMContentLoaded', () => {
       closeMenu();
     });
 
-    // Close when tapping any navigation link
+    // Navigation links handling:
+    // For hash links, smooth scroll and close.
+    // For standard page links, allow browser to navigate without cancelling the click event!
     navmenu.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        closeMenu();
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          e.preventDefault();
+          closeMenu();
+          const target = document.querySelector(href);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+          }
+        } else {
+          // Standard page navigation - do not prevent default, do not hide synchronously
+          setTimeout(() => {
+            closeMenu();
+          }, 250);
+        }
       });
     });
 
