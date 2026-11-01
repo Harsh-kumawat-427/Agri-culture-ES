@@ -39,6 +39,13 @@ def home():
     stats = db.get_statistics()
     all_crops = kb.get_all_crops()
     return render_template('index.html', stats=stats, all_crops=all_crops)
+
+@app.route('/advisor')
+def advisor():
+    """Serves dedicated AI Crop & Fertilizer Advisor consultation studio."""
+    stats = db.get_statistics()
+    all_crops = kb.get_all_crops()
+    return render_template('advisor.html', stats=stats, all_crops=all_crops)
  
 @app.route('/rotation')
 def rotation():

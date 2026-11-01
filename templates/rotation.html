@@ -7,8 +7,8 @@
   <title>Crop Recommendation by Soil, Time, Temp & Harvest Gap - AgriCulture</title>
   <meta name="description" content="AI Crop Recommendation based on Soil Condition, Sowing Season/Time, Temperature, and Time Between Two Crop Harvesting.">
 
-  <!-- Favicons -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/static/assets/img/logo.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -126,7 +126,9 @@
   <header id="header" class="header sticky-top">
     <div class="container-fluid container-xl d-flex align-items-center justify-content-between position-relative">
       <a href="/" class="logo-brand">
-        <div class="brand-icon"><i class="bi bi-flower1"></i></div>
+        <div class="brand-icon">
+          <img src="/static/assets/img/logo.png" alt="AgriCulture Logo" width="38" height="38">
+        </div>
         <div>
           <span class="brand-text">AgriCulture</span>
           <span class="brand-tagline">AI Expert System</span>
@@ -135,11 +137,12 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home & Advisor</a></li>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home</a></li>
+          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> AI Soil & Crop Advisor</a></li>
           <li><a href="/rotation" class="active"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
           <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
           <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
-          <li><a href="/#advisor-section" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-cpu me-1"></i> Test Soil</a></li>
+          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> Test Soil</a></li>
         </ul>
       </nav>
 
