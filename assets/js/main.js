@@ -40,7 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const footerDiv = document.createElement('div');
       footerDiv.className = 'navmenu-footer d-lg-none';
       footerDiv.innerHTML = `
-        <div class="fw-bold text-success mb-0">AgriCulture AI Advisor</div>
+        <div class="fw-bold text-success mb-1">AgriCulture AI Advisor</div>
+        <div class="small fw-semibold text-dark">Project By:</div>
         <div>Harsh Kumawat · Harshul Bhanwar · Hariom Patidar</div>
         <div class="text-muted" style="font-size: 10.5px;">Medi-Caps University</div>
       `;

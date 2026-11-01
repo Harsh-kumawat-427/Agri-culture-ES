@@ -198,7 +198,7 @@ python test_expert_system.py
 
 ---
 
-## 👥 Project Information
+## 👥 Project By
 * **Harsh Kumawat**
 * **Harshul Bhanwar**
 * **Hariom Patidar**
