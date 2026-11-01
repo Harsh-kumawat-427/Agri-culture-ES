@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Farm Advisory Report #{{ record.id }} - AgriCulture Expert System</title>
+
+  <!-- Favicons -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Marcellus:wght@400&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- Main CSS File -->
+  <link href="/static/assets/css/main.css" rel="stylesheet">
+
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm;
+    }
+
+    body {
+      background-color: #f3f6f2;
+      color: #212529;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    @media print {
+      /* Strictly hide all interface elements that are NOT part of the printed report */
+      .no-print, header, footer, nav, .btn, .sticky-top {
+        display: none !important;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        font-size: 10.5pt;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .report-paper {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        background: #ffffff !important;
+      }
+
+      .report-header {
+        border-bottom: 2.5px solid #2c5f2d !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 18px !important;
+      }
+
+      .section-head-report {
+        font-size: 1.05rem !important;
+        margin-top: 18px !important;
+        margin-bottom: 10px !important;
+        padding-bottom: 4px !important;
+        border-bottom: 1.5px solid #2c5f2d !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .table {
+        font-size: 9.5pt !important;
+        border-color: #444 !important;
+      }
+
+      tr, .section-head-report, .report-header, .row, .rounded-3, .signature-row {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .signature-row {
+        margin-top: 30px !important;
+        padding-top: 15px !important;
+        border-top: 1px solid #999 !important;
+      }
+    }
+
+    .report-paper {
+      background: #ffffff;
+      border: 1px solid #d8e2dc;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 45px 50px;
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    .report-header {
+      border-bottom: 3px double #2c5f2d;
+      padding-bottom: 20px;
+      margin-bottom: 25px;
+    }
+
+    .section-head-report {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e451f;
+      border-bottom: 2px solid #eaf3df;
+      padding-bottom: 8px;
+      margin-top: 25px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Print Action Bar (Hidden on print) -->
+  <div class="no-print bg-white border-bottom py-3 sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="/history" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to History Records
+      </a>
+      <div class="d-flex gap-2">
+        <a href="/" class="btn btn-agri-outline btn-sm">
+          <i class="bi bi-plus-circle me-1"></i> New Soil Test
+        </a>
+        <a href="/rotation" class="btn btn-agri-outline btn-sm">
+          <i class="bi bi-calendar2-range me-1"></i> Crop Rotation Engine
+        </a>
+        <button onclick="window.print()" class="btn btn-agri btn-sm">
+          <i class="bi bi-printer me-1"></i> Print / Save PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="report-paper">
+
+      <!-- Official Header -->
+      <div class="report-header d-flex justify-content-between align-items-center">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="fs-2 text-success"><i class="bi bi-flower1"></i></span>
+            <span class="fs-3 fw-bold" style="font-family: 'Marcellus', serif; color: #1e451f;">AgriCulture</span>
+          </div>
+          <div class="text-uppercase small fw-bold text-muted tracking-wider">AI Expert System • Precision Crop & Fertilizer Advisory</div>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-success-subtle text-success fs-6 border border-success px-3 py-2">
+            Advisory Report #{{ record.id }}
+          </span>
+          <div class="small text-muted mt-1">Generated: {{ record.timestamp }}</div>
+        </div>
+      </div>
+
+      <!-- Farmer & Field Info Box -->
+      <div class="row g-3 p-3 bg-light rounded-3 border mb-4">
+        <div class="col-sm-4">
+          <div class="small text-muted">Farmer Name:</div>
+          <div class="fw-bold text-dark fs-6">{{ record.farmer_name }}</div>
+        </div>
+        <div class="col-sm-4">
+          <div class="small text-muted">Farm Plot / Location:</div>
+          <div class="fw-bold text-dark fs-6">{{ record.location }}</div>
+        </div>
+        <div class="col-sm-4">
+          <div class="small text-muted">Soil Classification:</div>
+          <div class="fw-bold text-dark fs-6">{{ record.soil_type }} Soil</div>
+        </div>
+      </div>
+
+      <!-- Section 1: Soil Test Profile -->
+      <div class="section-head-report">
+        <i class="bi bi-clipboard2-pulse text-success"></i> 1. Soil Chemistry & Micro-Climate Profile
+      </div>
+      <table class="table table-bordered table-sm align-middle text-center mb-4">
+        <thead class="table-light">
+          <tr>
+            <th>Nitrogen (N)</th>
+            <th>Phosphorus (P)</th>
+            <th>Potassium (K)</th>
+            <th>Soil pH</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>Precipitation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="fw-bold fs-6">
+            <td>{{ record.N }} <span class="small fw-normal text-muted">kg/ha</span></td>
+            <td>{{ record.P }} <span class="small fw-normal text-muted">kg/ha</span></td>
+            <td>{{ record.K }} <span class="small fw-normal text-muted">kg/ha</span></td>
+            <td>{{ record.ph }} <span class="small fw-normal text-muted">pH</span></td>
+            <td>{{ record.temperature }} <span class="small fw-normal text-muted">°C</span></td>
+            <td>{{ record.humidity }} <span class="small fw-normal text-muted">%</span></td>
+            <td>{{ record.rainfall }} <span class="small fw-normal text-muted">mm</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Section 2: Machine Learning Crop Selection & Agronomic Parameters -->
+      <div class="section-head-report">
+        <i class="bi bi-cpu text-success"></i> 2. Machine Learning Crop Recommendation
+      </div>
+      <div class="p-4 rounded-3 border mb-4" style="background: linear-gradient(135deg, #f7faf5, #eef7ee); border-left: 6px solid #2c5f2d !important;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <span class="badge bg-success px-2 py-1 mb-1">Top Predicted Crop</span>
+            <h3 class="fw-bold text-success mb-1" style="font-family: 'Marcellus', serif;">{{ record.predicted_crop }}</h3>
+            <div class="text-muted small">Validated with multi-class supervised learning model against 2,200 Kaggle agronomic benchmark profiles.</div>
+          </div>
+          <div class="text-end">
+            <div class="display-6 fw-bold text-dark">{{ record.confidence }}%</div>
+            <div class="small text-muted">Model Confidence Match</div>
+          </div>
+        </div>
+
+        {% if crop_info %}
+        <!-- Temporal & Agronomic Suitability Indicators -->
+        <div class="row g-2 mt-3 pt-3 border-top">
+          <div class="col-sm-3 col-6">
+            <div class="p-2 bg-white rounded border text-center">
+              <div class="small text-muted" style="font-size: 11px;">Maturity Duration</div>
+              <div class="fw-bold text-dark small">{{ crop_info.growth_duration_days }}</div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-6">
+            <div class="p-2 bg-white rounded border text-center">
+              <div class="small text-muted" style="font-size: 11px;">Sowing Season</div>
+              <div class="fw-bold text-dark small">{{ crop_info.season }}</div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-6">
+            <div class="p-2 bg-white rounded border text-center">
+              <div class="small text-muted" style="font-size: 11px;">Thermal Range</div>
+              <div class="fw-bold text-dark small">{{ crop_info.temp_min }}°C - {{ crop_info.temp_max }}°C</div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-6">
+            <div class="p-2 bg-white rounded border text-center">
+              <div class="small text-muted" style="font-size: 11px;">Rotation Role</div>
+              <div class="fw-bold text-success small">{{ crop_info.rotation_role }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Section 3: Fertilizer Prescription -->
+      <div class="section-head-report">
+        <i class="bi bi-droplet-half text-success"></i> 3. Fertilizer Prescription & Target Dosage
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 border h-100">
+            <div class="small text-muted">Prescribed Fertilizer:</div>
+            <h4 class="fw-bold text-dark mt-1">{{ record.recommended_fertilizer }}</h4>
+            <div class="small text-muted mt-2">
+              Determined by forward-chaining rules and nutrient deficit gap (ideal crop requirement minus existing soil nutrient level).
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 rounded-3 border h-100 text-center" style="background: #eef7ee; border-color: #97bc62 !important;">
+            <div class="small text-muted fw-bold">Prescribed Application Rate</div>
+            <div class="display-6 fw-bold text-success my-1">{{ record.dosage_kg_ha }} <span class="fs-4">kg/ha</span></div>
+            <div class="fw-semibold text-dark">≈ {{ record.dosage_kg_acre }} kg per acre</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Explanation Facility -->
+      <div class="section-head-report">
+        <i class="bi bi-chat-left-quote text-success"></i> 4. Expert System Explanation Facility
+      </div>
+      <div class="p-3 bg-light rounded-3 border mb-4">
+        <p class="mb-0 text-dark" style="white-space: pre-line; line-height: 1.8;">
+          {{ record.explanation }}
+        </p>
+      </div>
+
+      <!-- Section 5: Verification & Signatures -->
+      <div class="row pt-4 mt-4 text-muted small signature-row">
+        <div class="col-6">
+          <div class="fw-bold text-dark mb-1">Project Information:</div>
+          <div class="text-dark">Harsh Kumawat</div>
+          <div class="text-dark">Harshul Bhanwar</div>
+          <div class="text-dark">Hariom Patidar</div>
+          <div class="text-success fw-bold">Medi-Caps University</div>
+          <div class="text-muted mt-2">Smart Crop & Fertilizer Advisor Expert System • AgriTech</div>
+        </div>
+        <div class="col-6 text-end">
+          <div>Verified Field Agronomist / Examiner:</div>
+          <div class="mt-4 border-top d-inline-block pt-1" style="width: 200px;">
+            Authorized Signature
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // If autoprint=1 is in URL, auto-trigger the print dialog cleanly
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('autoprint') === '1') {
+        setTimeout(() => {
+          window.print();
+        }, 400);
+      }
+    });
+  </script>
+</body>
+</html>

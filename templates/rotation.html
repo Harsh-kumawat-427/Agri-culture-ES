@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Crop Recommendation by Soil, Time, Temp & Harvest Gap - AgriCulture</title>
+  <meta name="description" content="AI Crop Recommendation based on Soil Condition, Sowing Season/Time, Temperature, and Time Between Two Crop Harvesting.">
+
+  <!-- Favicons -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Marcellus:wght@400&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- Main CSS File -->
+  <link href="/static/assets/css/main.css" rel="stylesheet">
+
+  <style>
+    @media print {
+      /* Strictly hide all non-report elements */
+      header,
+      #header,
+      .topbar,
+      nav,
+      #navmenu,
+      section.py-5,
+      .card.p-3.mb-4,
+      .col-lg-5,
+      #rot-placeholder,
+      section.bg-white,
+      footer,
+      .footer,
+      .btn,
+      .d-flex.gap-2.mt-4.pt-3,
+      .no-print {
+        display: none !important;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 10.5pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 10mm 15mm;
+      }
+
+      .section {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .row {
+        margin: 0 !important;
+        display: block !important;
+      }
+
+      .col-lg-7 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+        padding: 0 !important;
+      }
+
+      #rot-results-display {
+        display: block !important;
+        box-shadow: none !important;
+        border: 1.5px solid #2c5f2d !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        background: #ffffff !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .results-header-banner {
+        background: #2c5f2d !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .print-rot-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 15px 20px !important;
+        border-bottom: 2px solid #2c5f2d !important;
+        background: #ffffff !important;
+      }
+
+      .print-rot-footer {
+        display: block !important;
+        padding: 15px 20px !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header id="header" class="header sticky-top">
+    <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+      <a href="/" class="logo-brand">
+        <div class="brand-icon"><i class="bi bi-flower1"></i></div>
+        <div>
+          <span class="brand-text">AgriCulture</span>
+          <span class="brand-tagline">AI Expert System</span>
+        </div>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home & Advisor</a></li>
+          <li><a href="/rotation" class="active"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
+          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
+          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
+          <li><a href="/#advisor-section" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-cpu me-1"></i> Test Soil</a></li>
+        </ul>
+      </nav>
+
+      <!-- Mobile Hamburger Toggle -->
+      <i class="mobile-nav-toggle bi bi-list" title="Open Navigation Menu"></i>
+    </div>
+  </header>
+
+  <!-- Hero Title Banner -->
+  <section class="py-5" style="background: linear-gradient(135deg, #1b4332, #2c5f2d); color: #fff;">
+    <div class="container text-center">
+      <div class="badge bg-light text-success fw-bold px-3 py-2 rounded-pill mb-2">
+        <i class="bi bi-hourglass-split me-1"></i> Smart Crop Rotation & Harvest Window Engine
+      </div>
+      <h1 class="display-5 fw-bold text-white mb-2">Crop Recommendation by Soil, Time, Temperature & Harvest Gap</h1>
+      <p class="lead opacity-75 max-w-750 mx-auto">
+        Determine the optimal crop to plant based on your specific <strong>soil condition</strong>, <strong>sowing time / season</strong>, <strong>temperature</strong>, and the <strong>time between two crop harvesting</strong> (available fallow window).
+      </p>
+    </div>
+  </section>
+
+  <!-- Interactive Rotation Section -->
+  <section class="section">
+    <div class="container">
+
+      <!-- Preset Quick-Select Chips -->
+      <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 14px; background: #ffffff;">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <span class="fw-bold me-2 text-dark"><i class="bi bi-lightning-charge text-warning me-1"></i>Quick Rotation Presets:</span>
+          <button class="preset-chip" onclick="applyRotationPreset('summer_after_rice')">
+            🌾 75-Day Summer Window after Rice (Mungbean / Catch Crop)
+          </button>
+          <button class="preset-chip" onclick="applyRotationPreset('winter_after_maize')">
+            🌽 110-Day Winter Window after Maize (Chickpea / Wheat)
+          </button>
+          <button class="preset-chip" onclick="applyRotationPreset('cotton_rotation')">
+            🌱 160-Day Kharif Window (Cotton / Black Soil)
+          </button>
+          <button class="preset-chip" onclick="applyRotationPreset('arid_catch')">
+            🏜️ 70-Day Arid Sandy Fallow (Moth Beans)
+          </button>
+          <button class="preset-chip" onclick="applyRotationPreset('full_season')">
+            ☀️ Full Year / No Gap Restriction (Annual / Perennial)
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Input Form Column -->
+        <div class="col-lg-5">
+          <div class="expert-card">
+            <div class="card-header-styled">
+              <div class="card-header-icon"><i class="bi bi-sliders2-vertical"></i></div>
+              <div>
+                <h4 class="mb-0 fs-5">Cropping Parameters</h4>
+                <small class="text-muted">Enter seasonal and harvest interval constraints</small>
+              </div>
+            </div>
+
+            <form id="rotation-form" onsubmit="runRotationInference(event)">
+
+              <!-- 1. Soil Condition -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <span><i class="bi bi-layers text-success me-1"></i>Soil Condition & Classification</span>
+                </label>
+                <select class="form-select" id="rot_soil_condition">
+                  <option value="Loamy" selected>Loamy Soil (Fertile, balanced drainage & moisture)</option>
+                  <option value="Clayey">Clayey Soil (Heavy moisture-holding capacity)</option>
+                  <option value="Sandy">Sandy Soil (High aeration, rapid drainage, light)</option>
+                  <option value="Black">Black Cotton Soil (Rich in montmorillonite clay)</option>
+                  <option value="Alluvial">Alluvial River Basin Soil (High silt & mineral fertility)</option>
+                  <option value="Red">Red Soil (Iron-oxide rich, porous)</option>
+                </select>
+              </div>
+
+              <!-- Soil Reaction (pH) -->
+              <div class="mb-3">
+                <div class="form-label">
+                  <span>Soil pH Reaction</span>
+                  <span class="unit"><strong id="val_rot_ph">6.5</strong> pH</span>
+                </div>
+                <input type="range" class="form-range" id="range_rot_ph" min="4.0" max="9.0" step="0.1" value="6.5" oninput="document.getElementById('val_rot_ph').innerText = this.value">
+              </div>
+
+              <hr class="my-3 text-muted">
+
+              <!-- 2. Time of Year / Sowing Season -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <span><i class="bi bi-calendar3 text-success me-1"></i>Time of Year / Sowing Season</span>
+                </label>
+                <select class="form-select" id="rot_time_of_year">
+                  <option value="Zaid (Summer: March - June)" selected>Zaid (Summer: March - June / Short Catch Period)</option>
+                  <option value="Kharif (Monsoon: June - October)">Kharif (Monsoon: June - October / Wet Season)</option>
+                  <option value="Rabi (Winter: October - March)">Rabi (Winter: October - March / Cool Dry Season)</option>
+                  <option value="Spring (February - April)">Spring Season (February - April)</option>
+                  <option value="All Year / Any Season">All Year / Any Season</option>
+                </select>
+              </div>
+
+              <!-- 3. Ambient Temperature -->
+              <div class="mb-3">
+                <div class="form-label">
+                  <span><i class="bi bi-thermometer-half text-danger me-1"></i>Ambient Temperature (°C)</span>
+                  <span class="unit"><strong id="val_rot_temp">28.0</strong> °C</span>
+                </div>
+                <input type="range" class="form-range" id="range_rot_temp" min="8" max="45" step="0.5" value="28.0" oninput="document.getElementById('val_rot_temp').innerText = parseFloat(this.value).toFixed(1)">
+              </div>
+
+              <hr class="my-3 text-muted">
+
+              <!-- 4. Time Between Two Crop Harvesting (Fallow Gap in Days) -->
+              <div class="mb-4">
+                <div class="form-label">
+                  <span><i class="bi bi-hourglass-split text-warning me-1"></i>Time Between Two Crop Harvesting</span>
+                  <span class="unit"><strong id="val_rot_gap">75</strong> Days Available</span>
+                </div>
+                <input type="range" class="form-range" id="range_rot_gap" min="45" max="365" step="5" value="75" oninput="document.getElementById('val_rot_gap').innerText = (this.value >= 330 ? '365+ (Full Year)' : this.value + ' Days')">
+                <div class="d-flex justify-content-between text-muted small mt-1" style="font-size: 11px;">
+                  <span>45d (Catch crop)</span>
+                  <span>90d (Short)</span>
+                  <span>150d (Medium)</span>
+                  <span>365d (Full Year)</span>
+                </div>
+              </div>
+
+              <!-- 5. Previous Crop (Rotation Synergy) -->
+              <div class="mb-4">
+                <label class="form-label">
+                  <span><i class="bi bi-arrow-repeat text-success me-1"></i>Previous Harvested Crop (Preceding Crop)</span>
+                </label>
+                <select class="form-select" id="rot_prev_crop">
+                  <option value="Rice (Paddy)" selected>Rice / Paddy (Exhausts Nitrogen & compacts soil)</option>
+                  <option value="Wheat">Wheat (High nitrogen consumer)</option>
+                  <option value="Maize (Corn)">Maize (Heavy nutrient feeder)</option>
+                  <option value="Cotton">Cotton (Deep root exhaustion)</option>
+                  <option value="Chickpea / Pulses">Pulses / Legumes (Soil enriched with nitrogen)</option>
+                  <option value="Vegetables">Vegetables / Commercial</option>
+                  <option value="None / Fallow Field">None / Fallow Field (Uncultivated)</option>
+                </select>
+                <small class="text-muted d-block mt-1">Helps the expert system calculate symbiotic nitrogen fixation and rotation benefits.</small>
+              </div>
+
+              <button type="submit" class="btn btn-agri w-100 py-3" id="btn-rot-submit">
+                <i class="bi bi-magic me-2"></i> Recommend Optimal Crop & Rotation Plan
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Output / Results Column -->
+        <div class="col-lg-7">
+          <div id="rot-results-placeholder" class="expert-card d-flex flex-column align-items-center justify-content-center text-center p-5">
+            <img src="/static/assets/img/crops_harvest.jpg" class="img-fluid rounded-4 mb-4 shadow-sm" style="max-height: 250px; object-fit: cover;" alt="Crops Harvest">
+            <h4 class="text-success">Ready to Evaluate Crop & Rotation Fit</h4>
+            <p class="text-muted" style="max-width: 440px;">
+              Select your <strong>soil condition</strong>, <strong>season/time</strong>, <strong>temperature</strong>, and the <strong>time between two harvests (fallow gap)</strong> to receive an agronomic recommendation tailored to your calendar window.
+            </p>
+            <button class="btn btn-agri-outline mt-2" onclick="applyRotationPreset('summer_after_rice'); document.getElementById('btn-rot-submit').click();">
+              <i class="bi bi-play-circle me-1"></i> Run Demonstration (75-Day Summer Window)
+            </button>
+          </div>
+
+          <div id="rot-results-display" class="results-card d-none">
+            <!-- Print-Only Rotation Report Header (Visible strictly when printing this report) -->
+            <div class="print-rot-header d-none">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="fs-4 text-success"><i class="bi bi-flower1"></i></span>
+                  <span class="fs-4 fw-bold" style="font-family: 'Marcellus', serif; color: #1e451f;">AgriCulture</span>
+                </div>
+                <div class="small text-muted text-uppercase fw-bold">Temporal Crop Recommendation & Harvest Gap Plan</div>
+              </div>
+              <div class="text-end">
+                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">Rotation Advisory Plan</span>
+                <div class="small text-muted mt-1" id="rot-print-timestamp"></div>
+              </div>
+            </div>
+
+            <!-- Results Banner -->
+            <div class="results-header-banner">
+              <div>
+                <span class="text-uppercase small tracking-wider text-light opacity-75">Optimal Recommended Crop</span>
+                <h3 class="crop-badge-lg mt-1" id="rot-res-crop-name">
+                  <i class="bi bi-patch-check-fill text-warning"></i> <span>Mung Bean</span>
+                </h3>
+                <div class="small text-light opacity-90" id="rot-res-crop-category">Pulses / Short-Duration Catch Crop</div>
+              </div>
+              <div class="text-end">
+                <span class="confidence-pill" id="rot-res-score">99.5% Match</span>
+                <div class="small mt-1 text-light opacity-75">Agronomic Compatibility</div>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <!-- Harvest Window Match Visual Box -->
+              <div class="p-3 bg-light rounded-3 border mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold text-dark mb-0"><i class="bi bi-hourglass-bottom text-success me-1"></i>Harvest Window Compatibility</h6>
+                  <span class="badge bg-success-subtle text-success border border-success" id="rot-res-buffer-badge">
+                    Fits Safely within Window
+                  </span>
+                </div>
+
+                <div class="row g-2 text-center mt-2">
+                  <div class="col-4">
+                    <div class="p-2 bg-white rounded border">
+                      <div class="small text-muted" style="font-size: 11px;">Your Available Gap</div>
+                      <div class="fw-bold text-dark fs-5" id="rot-res-available-gap">75 Days</div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="p-2 bg-white rounded border">
+                      <div class="small text-muted" style="font-size: 11px;">Crop Maturity Time</div>
+                      <div class="fw-bold text-success fs-5" id="rot-res-crop-duration">60 - 75 Days</div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="p-2 bg-white rounded border">
+                      <div class="small text-muted" style="font-size: 11px;">Safety Buffer</div>
+                      <div class="fw-bold text-primary fs-5" id="rot-res-buffer-days">+10 Days</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Explanation Facility Reasoning -->
+              <div class="explanation-facility-box">
+                <h5><i class="bi bi-chat-quote-fill text-success"></i>Inference Engine Agronomic Reasoning:</h5>
+                <p id="rot-res-explanation" class="mb-0 text-dark" style="white-space: pre-line; line-height: 1.8;">
+                  <!-- Filled dynamically -->
+                </p>
+              </div>
+
+              <!-- Top Alternative Candidate Crops -->
+              <div class="mt-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-list-check text-success me-1"></i>Alternative Crops Fitting Your Harvest Gap & Conditions:</h6>
+                <div class="row g-3" id="rot-res-alternatives">
+                  <!-- Filled dynamically -->
+                </div>
+              </div>
+
+              <!-- Soil Health & Rotation Benefits -->
+              <div class="p-3 rounded-3 border mt-4" style="background: #eef7ee; border-color: #97bc62 !important;">
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-shield-check me-1"></i>Soil Regeneration & Rotation Impact:</h6>
+                <p class="small text-dark mb-0" id="rot-res-rotation-benefits">
+                  <!-- Filled dynamically -->
+                </p>
+              </div>
+
+              <!-- Action Buttons (Strictly hidden during print) -->
+              <div class="d-flex gap-2 mt-4 pt-3 border-top no-print">
+                <a href="/" class="btn btn-agri flex-fill">
+                  <i class="bi bi-arrow-right-circle me-1"></i> Open in Fertilizer Advisor Form
+                </a>
+                <button type="button" class="btn btn-agri-outline flex-fill" onclick="window.print()">
+                  <i class="bi bi-printer me-1"></i> Print Rotation Plan
+                </button>
+              </div>
+
+              <!-- Print-Only Footer (Visible strictly when printing) -->
+              <div class="print-rot-footer d-none pt-4 mt-3 border-top">
+                <div class="d-flex justify-content-between text-muted small">
+                  <div>
+                    <strong class="text-dark">AgriCulture Expert System • Crop Rotation Engine</strong>
+                    <div class="fw-bold text-dark mt-1">Project Information:</div>
+                    <div>Harsh Kumawat</div>
+                    <div>Harshul Bhanwar</div>
+                    <div>Hariom Patidar</div>
+                    <div class="text-success fw-semibold">Medi-Caps University</div>
+                  </div>
+                  <div class="text-end">
+                    <div>Agronomic Verification:</div>
+                    <div class="border-top mt-4 pt-1" style="width: 170px;">Examiner / Field Officer</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Agronomic Rotation Science Section -->
+  <section class="section bg-white border-top">
+    <div class="container">
+      <div class="section-title">
+        <h2>Principles of Temporal Crop Recommendation & Rotation</h2>
+        <p>How our expert system synchronizes soil fertility with seasonal thermal units and harvest intervals.</p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="expert-card p-4 h-100">
+            <div class="card-header-styled">
+              <div class="card-header-icon text-success"><i class="bi bi-hourglass-split"></i></div>
+              <div>
+                <h5 class="mb-0">1. Harvest Gap Window</h5>
+                <small class="text-muted">Fallow Period Match</small>
+              </div>
+            </div>
+            <p class="small text-muted mb-0">
+              When farmers rotate between major staples (e.g., Rice-Wheat), short fallow gaps (60-85 days) open. Recommending short-cycle legumes prevents land idling and maximizes annual farm revenue.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="expert-card p-4 h-100">
+            <div class="card-header-styled">
+              <div class="card-header-icon text-danger"><i class="bi bi-thermometer-sun"></i></div>
+              <div>
+                <h5 class="mb-0">2. Thermal Units (GDD)</h5>
+                <small class="text-muted">Growing Degree Days</small>
+              </div>
+            </div>
+            <p class="small text-muted mb-0">
+              Every crop demands a physiological base temperature. The system guarantees that your seasonal ambient temperature provides the necessary degree days for vegetative and flowering stages.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="expert-card p-4 h-100">
+            <div class="card-header-styled">
+              <div class="card-header-icon text-primary"><i class="bi bi-layers-half"></i></div>
+              <div>
+                <h5 class="mb-0">3. Soil Condition Match</h5>
+                <small class="text-muted">Texture & pH Dynamics</small>
+              </div>
+            </div>
+            <p class="small text-muted mb-0">
+              Soil texture (sandy, loamy, clayey, black) determines water holding capacity and root aeration, matching moisture-loving crops to heavy soils and drought-tolerant pulses to sandy soils.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="expert-card p-4 h-100">
+            <div class="card-header-styled">
+              <div class="card-header-icon text-success"><i class="bi bi-arrow-repeat"></i></div>
+              <div>
+                <h5 class="mb-0">4. Rotation Synergy</h5>
+                <small class="text-muted">Nitrogen Regeneration</small>
+              </div>
+            </div>
+            <p class="small text-muted mb-0">
+              Alternating deep-rooted legumes with fibrous-rooted cereals naturally fixes 30-50 kg/ha atmospheric Nitrogen, disrupts insect pest cycles, and prevents soil exhaustion.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="row gy-3 justify-content-between align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <div class="fw-bold text-white mb-1">Project Information</div>
+          <div class="small text-light opacity-90">Harsh Kumawat</div>
+          <div class="small text-light opacity-90">Harshul Bhanwar</div>
+          <div class="small text-light opacity-90">Hariom Patidar</div>
+          <div class="small text-success fw-semibold">Medi-Caps University</div>
+        </div>
+        <div class="col-md-6 text-center text-md-end small text-muted">
+          <div>AgriCulture Smart Crop & Fertilizer Advisor Expert System</div>
+          <div>Academic Subject Project • AgriTech</div>
+          <div class="mt-1 opacity-75">© 2026 All rights reserved.</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/assets/js/main.js"></script>
+
+  <script>
+    const ROTATION_PRESETS = {
+      summer_after_rice: {
+        soil: "Loamy", ph: 6.5, time: "Zaid (Summer: March - June)",
+        temp: 30.0, gap: 75, prev: "Rice (Paddy)"
+      },
+      winter_after_maize: {
+        soil: "Black", ph: 7.2, time: "Rabi (Winter: October - March)",
+        temp: 18.0, gap: 110, prev: "Maize (Corn)"
+      },
+      cotton_rotation: {
+        soil: "Black", ph: 7.0, time: "Kharif (Monsoon: June - October)",
+        temp: 26.0, gap: 160, prev: "Wheat"
+      },
+      arid_catch: {
+        soil: "Sandy", ph: 7.0, time: "Zaid (Summer: March - June)",
+        temp: 32.0, gap: 70, prev: "None / Fallow Field"
+      },
+      full_season: {
+        soil: "Alluvial", ph: 6.5, time: "All Year / Any Season",
+        temp: 25.0, gap: 365, prev: "None / Fallow Field"
+      }
+    };
+
+    function applyRotationPreset(name) {
+      const p = ROTATION_PRESETS[name];
+      if (!p) return;
+      document.getElementById('rot_soil_condition').value = p.soil;
+      document.getElementById('range_rot_ph').value = p.ph;
+      document.getElementById('val_rot_ph').innerText = p.ph;
+
+      document.getElementById('rot_time_of_year').value = p.time;
+
+      document.getElementById('range_rot_temp').value = p.temp;
+      document.getElementById('val_rot_temp').innerText = p.temp.toFixed(1);
+
+      document.getElementById('range_rot_gap').value = p.gap;
+      document.getElementById('val_rot_gap').innerText = (p.gap >= 330 ? '365+ (Full Year)' : p.gap + ' Days');
+
+      document.getElementById('rot_prev_crop').value = p.prev;
+    }
+
+    async function runRotationInference(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-rot-submit');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Evaluating Harvest Gap & Rotation Rules...`;
+      btn.disabled = true;
+
+      const payload = {
+        soil_condition: document.getElementById('rot_soil_condition').value,
+        ph: parseFloat(document.getElementById('range_rot_ph').value),
+        time_of_year: document.getElementById('rot_time_of_year').value,
+        temperature: parseFloat(document.getElementById('range_rot_temp').value),
+        harvest_gap_days: parseInt(document.getElementById('range_rot_gap').value),
+        previous_crop: document.getElementById('rot_prev_crop').value
+      };
+
+      try {
+        const response = await fetch('/api/recommend-rotation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          alert("Error: " + (data.error || "Inference failed"));
+          return;
+        }
+
+        renderRotationResults(data);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to connect to rotation expert system backend: " + err.message);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    function renderRotationResults(data) {
+      document.getElementById('rot-results-placeholder').classList.add('d-none');
+      const disp = document.getElementById('rot-results-display');
+      disp.classList.remove('d-none');
+
+      const top = data.primary_recommendation;
+      const inp = data.inputs;
+
+      const tsEl = document.getElementById('rot-print-timestamp');
+      if (tsEl) {
+        tsEl.innerText = 'Generated: ' + new Date().toLocaleString();
+      }
+
+      document.getElementById('rot-res-crop-name').innerHTML = `<i class="bi bi-patch-check-fill text-warning"></i> <span>${top.display_name}</span>`;
+      document.getElementById('rot-res-crop-category').innerText = `${top.category} • Preferred Season: ${top.season}`;
+      document.getElementById('rot-res-score').innerText = `${top.suitability_score}% Match`;
+
+      // Harvest window box
+      document.getElementById('rot-res-available-gap').innerText = `${inp.harvest_gap_days} Days`;
+      document.getElementById('rot-res-crop-duration').innerText = top.duration_days;
+      
+      const buffer = inp.harvest_gap_days - top.duration_max;
+      const bufferBadge = document.getElementById('rot-res-buffer-badge');
+      const bufferDays = document.getElementById('rot-res-buffer-days');
+
+      if (inp.harvest_gap_days >= 300) {
+        bufferBadge.className = 'badge bg-success-subtle text-success border border-success';
+        bufferBadge.innerText = 'Full Season Availability';
+        bufferDays.innerText = 'No Window Limit';
+      } else if (buffer >= 0) {
+        bufferBadge.className = 'badge bg-success-subtle text-success border border-success';
+        bufferBadge.innerText = 'Safe Buffer Before Next Crop';
+        bufferDays.innerText = `+${buffer} Days Buffer`;
+      } else {
+        bufferBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning';
+        bufferBadge.innerText = 'Tight Harvest Window';
+        bufferDays.innerText = `Early Harvest (${top.duration_min}d)`;
+      }
+
+      // Explanation narrative
+      document.getElementById('rot-res-explanation').innerText = data.explanation;
+
+      // Rotation benefits
+      document.getElementById('rot-res-rotation-benefits').innerHTML = `<strong>Agronomic Field Benefit:</strong> ${top.rotation_benefits || 'Promotes balanced soil nutrient recovery and suppresses continuous crop weeds.'}`;
+
+      // Alternatives list
+      const altContainer = document.getElementById('rot-res-alternatives');
+      altContainer.innerHTML = '';
+      if (data.top_alternatives && data.top_alternatives.length > 0) {
+        data.top_alternatives.forEach(alt => {
+          const col = document.createElement('div');
+          col.className = 'col-md-4';
+          col.innerHTML = `
+            <div class="p-3 bg-light rounded-3 border h-100">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="text-dark">${alt.display_name}</strong>
+                <span class="badge bg-secondary-subtle text-secondary">${alt.suitability_score}%</span>
+              </div>
+              <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i>${alt.duration_days}</div>
+              <div class="small text-muted" style="font-size: 11px;">${alt.category}</div>
+            </div>
+          `;
+          altContainer.appendChild(col);
+        });
+      }
+
+      disp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+</body>
+
+</html>
+

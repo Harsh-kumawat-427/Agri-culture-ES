@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Knowledge Base - Smart Crop & Fertilizer Advisor</title>
+  <meta name="description" content="Agronomic Knowledge Base: 22 crop benchmark profiles, production IF-THEN rules, and fertilizer chemical compositions.">
+
+  <!-- Favicons -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Marcellus:wght@400&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- Main CSS File -->
+  <link href="/static/assets/css/main.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header id="header" class="header sticky-top">
+    <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+      <a href="/" class="logo-brand">
+        <div class="brand-icon"><i class="bi bi-flower1"></i></div>
+        <div>
+          <span class="brand-text">AgriCulture</span>
+          <span class="brand-tagline">AI Expert System</span>
+        </div>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home & Advisor</a></li>
+          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
+          <li><a href="/knowledge" class="active"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
+          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
+          <li><a href="/#advisor-section" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-cpu me-1"></i> Test Soil</a></li>
+        </ul>
+      </nav>
+
+      <!-- Mobile Hamburger Toggle -->
+      <i class="mobile-nav-toggle bi bi-list" title="Open Navigation Menu"></i>
+    </div>
+  </header>
+
+  <!-- Page Title Banner -->
+  <section class="py-5" style="background: linear-gradient(135deg, #1b4332, #2c5f2d); color: #fff;">
+    <div class="container text-center">
+      <div class="badge bg-light text-success fw-bold px-3 py-2 rounded-pill mb-2">Expert System Component #1</div>
+      <h1 class="display-5 fw-bold text-white mb-2">Agronomic Knowledge Base</h1>
+      <p class="lead opacity-75 max-w-700 mx-auto">
+        Domain-expert repository containing crop nutrient requirements, chemical fertilizer compositions, and forward-chaining IF-THEN production rules.
+      </p>
+    </div>
+  </section>
+
+  <!-- Navigation Pills for Sections -->
+  <div class="bg-white border-bottom py-3 sticky-top" style="top: 76px; z-index: 990;">
+    <div class="container">
+      <ul class="nav nav-pills justify-content-center gap-2" id="kbTabs">
+        <li class="nav-item">
+          <a class="nav-link active rounded-pill fw-semibold" href="#crops-section"><i class="bi bi-tree me-1"></i> 22 Crop Profiles</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link rounded-pill fw-semibold text-dark" href="#rules-section"><i class="bi bi-funnel me-1"></i> Production IF-THEN Rules</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link rounded-pill fw-semibold text-dark" href="#fertilizers-section"><i class="bi bi-droplet-half me-1"></i> Fertilizer Chemistry & Dosage</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 22 Crops Section -->
+  <section id="crops-section" class="section">
+    <div class="container">
+      <div class="section-title">
+        <h2>22 Crop Nutrient Requirements & Climates</h2>
+        <p>Ideal N, P, K ranges and environmental tolerances referenced by the Inference Engine to detect soil deficiencies.</p>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="row mb-4 justify-content-between align-items-center g-3">
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" class="form-control border-start-0" id="cropSearchInput" placeholder="Search crops by name or category..." onkeyup="filterCrops()">
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <span class="badge bg-light text-dark border p-2"><i class="bi bi-collection me-1 text-success"></i>Showing <span id="visibleCropCount">22</span> of 22 Crops</span>
+        </div>
+      </div>
+
+      <div class="row g-4" id="cropCardsGrid">
+        {% for crop_key, crop in crops.items() %}
+        <div class="col-lg-4 col-md-6 crop-card-item" data-name="{{ crop.display_name|lower }} {{ crop.category|lower }} {{ crop_key }}">
+          <div class="expert-card h-100 p-4 position-relative">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <span class="badge bg-success-subtle text-success small fw-semibold px-2 py-1 rounded">{{ crop.category }}</span>
+                <h4 class="fw-bold mt-2 mb-0">{{ crop.display_name }}</h4>
+                <small class="text-muted">Identifier: <code>{{ crop_key }}</code></small>
+              </div>
+              <span class="badge bg-light text-dark border"><i class="bi bi-clock me-1"></i>{{ crop.growth_duration_days }}</span>
+            </div>
+
+            <!-- Nutrients Pill Row -->
+            <div class="row g-2 text-center my-3">
+              <div class="col-4">
+                <div class="p-2 rounded" style="background: #eef7ee;">
+                  <div class="small text-muted fw-bold">Ideal N</div>
+                  <div class="fw-bold text-success fs-5">{{ crop.ideal_N }} <span class="small fs-6 fw-normal">kg/ha</span></div>
+                  <div class="small text-muted" style="font-size: 11px;">Range: {{ crop.N_min }}-{{ crop.N_max }}</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 rounded" style="background: #eef7ee;">
+                  <div class="small text-muted fw-bold">Ideal P</div>
+                  <div class="fw-bold text-success fs-5">{{ crop.ideal_P }} <span class="small fs-6 fw-normal">kg/ha</span></div>
+                  <div class="small text-muted" style="font-size: 11px;">Range: {{ crop.P_min }}-{{ crop.P_max }}</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 rounded" style="background: #eef7ee;">
+                  <div class="small text-muted fw-bold">Ideal K</div>
+                  <div class="fw-bold text-success fs-5">{{ crop.ideal_K }} <span class="small fs-6 fw-normal">kg/ha</span></div>
+                  <div class="small text-muted" style="font-size: 11px;">Range: {{ crop.K_min }}-{{ crop.K_max }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Environmental Requirements -->
+            <div class="bg-light p-3 rounded mb-3 small">
+              <div class="d-flex justify-content-between mb-1">
+                <span><i class="bi bi-thermometer-half text-danger me-1"></i>Optimal Temp:</span>
+                <strong>{{ crop.ideal_temp_c }}°C</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span><i class="bi bi-cloud-rain text-primary me-1"></i>Ideal Rainfall:</span>
+                <strong>{{ crop.ideal_rainfall_mm }} mm</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span><i class="bi bi-droplet text-info me-1"></i>Soil pH Range:</span>
+                <strong>{{ crop.ph_min }} - {{ crop.ph_max }} (Ideal: {{ crop.ideal_ph }})</strong>
+              </div>
+            </div>
+
+            <p class="small text-muted mb-0">
+              <i class="bi bi-info-circle text-success me-1"></i>{{ crop.notes }}
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Production IF-THEN Rules Section -->
+  <section id="rules-section" class="section bg-white border-top">
+    <div class="container">
+      <div class="section-title">
+        <h2>7. Production Rules for the Knowledge Base</h2>
+        <p>Expert rules evaluated sequentially by the Inference Engine to recommend fertilizers, correct pH, and determine doses.</p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-custom align-middle">
+          <thead>
+            <tr>
+              <th style="width: 12%;">Rule ID</th>
+              <th style="width: 32%;">IF (Soil / Climate Condition)</th>
+              <th style="width: 20%;">THEN (Expert Advice)</th>
+              <th style="width: 14%;">Target Nutrient</th>
+              <th style="width: 12%;">Priority</th>
+              <th style="width: 10%;">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rule in rules %}
+            <tr>
+              <td class="fw-bold text-success">
+                <code>{{ rule.rule_id }}</code>
+              </td>
+              <td>
+                <i class="bi bi-arrow-right-short text-success fw-bold"></i>
+                <strong>{{ rule.condition_desc }}</strong>
+              </td>
+              <td>
+                <span class="badge bg-success-subtle text-success p-2 fs-6 d-inline-block mb-1">
+                  {{ rule.suggested_fertilizer }}
+                </span>
+                <div class="small text-muted">{{ rule.advice }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ rule.target_nutrient }}</span>
+              </td>
+              <td>
+                <span class="badge bg-secondary">{{ rule.priority }}</span>
+              </td>
+              <td>
+                <span class="badge {% if rule.rule_type == 'deficiency' %}bg-warning-subtle text-warning-emphasis{% elif rule.rule_type == 'soil_ph' %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %}">
+                  {{ rule.rule_type }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Dosage Formula Explanatory Card -->
+      <div class="p-4 bg-light rounded-4 border-start border-4 border-success mt-4">
+        <h5 class="fw-bold text-dark"><i class="bi bi-calculator me-2 text-success"></i>Dosage Calculation Rule Formulation</h5>
+        <p class="text-muted mb-2">
+          The prescribed fertilizer dosage is computed by comparing the crop's ideal requirement against the current soil nutrient level to derive the <strong>nutrient deficit gap</strong>:
+        </p>
+        <div class="p-3 bg-white rounded-3 border font-monospace text-center fs-5 fw-bold text-success my-3">
+          Dosage (kg/hectare) = Nutrient Gap (kg/ha) ÷ [ Active Nutrient Percentage ÷ 100 ]
+        </div>
+        <div class="row g-3 small text-muted">
+          <div class="col-md-4">
+            <strong>Example 1 (Urea - 46% N):</strong> If Rice ideal Nitrogen is 80 kg/ha and current soil is 60 kg/ha, Gap = 20 kg/ha. Dose = 20 ÷ 0.46 = <strong>43.5 kg/ha</strong>.
+          </div>
+          <div class="col-md-4">
+            <strong>Example 2 (DAP - 46% P):</strong> If Chickpea ideal Phosphorus is 68 kg/ha and soil is 20 kg/ha, Gap = 48 kg/ha. Dose = 48 ÷ 0.46 = <strong>104.3 kg/ha</strong>.
+          </div>
+          <div class="col-md-4">
+            <strong>Example 3 (MOP - 60% K):</strong> If Grapes ideal Potassium is 200 kg/ha and soil is 150 kg/ha, Gap = 50 kg/ha. Dose = 50 ÷ 0.60 = <strong>83.3 kg/ha</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fertilizer Chemical Composition Section -->
+  <section id="fertilizers-section" class="section bg-light border-top">
+    <div class="container">
+      <div class="section-title">
+        <h2>Fertilizer Active Chemistry & Nutrient Profiles</h2>
+        <p>Elemental specifications and buffering agents used by the FertilizerAdvisor engine.</p>
+      </div>
+
+      <div class="row g-4">
+        {% for name, fert in fertilizers.items() %}
+        <div class="col-lg-4 col-md-6">
+          <div class="expert-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="fw-bold mb-0 text-success">{{ fert.name }}</h4>
+              <span class="badge bg-light text-dark border">{{ fert.formula }}</span>
+            </div>
+            <div class="text-muted small mb-3">Primary Target: <strong>{{ fert.primary_nutrient }}</strong></div>
+
+            <!-- Active Percentages -->
+            <div class="row g-2 text-center mb-3">
+              <div class="col-4">
+                <div class="p-2 bg-white rounded border">
+                  <div class="small text-muted" style="font-size: 11px;">Nitrogen (N)</div>
+                  <div class="fw-bold text-dark">{{ fert.n_percent }}%</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 bg-white rounded border">
+                  <div class="small text-muted" style="font-size: 11px;">Phosphorus (P)</div>
+                  <div class="fw-bold text-dark">{{ fert.p_percent }}%</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 bg-white rounded border">
+                  <div class="small text-muted" style="font-size: 11px;">Potassium (K)</div>
+                  <div class="fw-bold text-dark">{{ fert.k_percent }}%</div>
+                </div>
+              </div>
+            </div>
+
+            <p class="small text-muted mb-0">
+              {{ fert.description }}
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="row gy-3 justify-content-between align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <div class="fw-bold text-white mb-1">Project Information</div>
+          <div class="small text-light opacity-90">Harsh Kumawat</div>
+          <div class="small text-light opacity-90">Harshul Bhanwar</div>
+          <div class="small text-light opacity-90">Hariom Patidar</div>
+          <div class="small text-success fw-semibold">Medi-Caps University</div>
+        </div>
+        <div class="col-md-6 text-center text-md-end small text-muted">
+          <div>AgriCulture Smart Crop & Fertilizer Advisor Expert System</div>
+          <div>Academic Subject Project • AgriTech</div>
+          <div class="mt-1 opacity-75">© 2026 All rights reserved.</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/assets/js/main.js"></script>
+
+  <script>
+    function filterCrops() {
+      const q = document.getElementById('cropSearchInput').value.toLowerCase().trim();
+      const items = document.querySelectorAll('.crop-card-item');
+      let visible = 0;
+
+      items.forEach(item => {
+        const text = item.getAttribute('data-name');
+        if (text.includes(q)) {
+          item.style.display = '';
+          visible++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      document.getElementById('visibleCropCount').innerText = visible;
+    }
+  </script>
+</body>
+
+</html>

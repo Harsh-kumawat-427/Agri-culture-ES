@@ -1,0 +1,13 @@
+soil_type,crop_type,N,P,K,fertilizer,dosage_kg_ha
+Sandy,Maize,60,30,20,Urea,50
+Loamy,Rice,50,40,40,Urea,65
+Clayey,Cotton,70,25,20,NPK 19:19:19,75
+Black,Chickpea,20,45,30,DAP,60
+Red,Coffee,50,15,20,Urea,55
+Alluvial,Banana,60,50,35,MOP,45
+Loamy,Grapes,15,80,120,MOP,70
+Sandy,Watermelon,60,10,30,NPK 19:19:19,50
+Clayey,Pigeonpeas,15,40,15,DAP,50
+Alluvial,Jute,45,30,25,Urea,50
+Loamy,Apple,15,90,130,MOP,80
+Sandy,Papaya,30,35,30,NPK 19:19:19,60
