@@ -1,37 +1,119 @@
 /**
  * AgriCulture Expert System - Mobile Navigation & UI Enhancements
+ * Implements accessible, high-performance top-right dropdown navigation.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Mobile Navigation Toggle Handler
   const toggleBtn = document.querySelector('.mobile-nav-toggle');
   const navmenu = document.querySelector('#navmenu') || document.querySelector('.navmenu');
 
   if (toggleBtn && navmenu) {
-    toggleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      navmenu.classList.toggle('mobile-nav-active');
-      toggleBtn.classList.toggle('bi-list');
-      toggleBtn.classList.toggle('bi-x');
-    });
+    // 1. Ensure backdrop element exists in the DOM
+    let backdrop = document.querySelector('.mobile-nav-backdrop');
+    if (!backdrop) {
+      backdrop = document.createElement('div');
+      backdrop.className = 'mobile-nav-backdrop';
+      backdrop.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(backdrop);
+    }
 
-    // Close when tapping anywhere outside the mobile drawer
-    document.addEventListener('click', (e) => {
-      if (!navmenu.contains(e.target) && !toggleBtn.contains(e.target) && navmenu.classList.contains('mobile-nav-active')) {
-        navmenu.classList.remove('mobile-nav-active');
-        toggleBtn.classList.add('bi-list');
-        toggleBtn.classList.remove('bi-x');
+    // 2. Set accessibility attributes
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.setAttribute('aria-label', 'Toggle Navigation Menu');
+    toggleBtn.setAttribute('aria-controls', 'navmenu');
+    toggleBtn.setAttribute('role', 'button');
+    toggleBtn.setAttribute('tabindex', '0');
+
+    // 3. Inject header inside navmenu if not present
+    if (!navmenu.querySelector('.navmenu-header')) {
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'navmenu-header d-lg-none';
+      headerDiv.innerHTML = `
+        <span class="navmenu-title"><i class="bi bi-flower1"></i> Quick Menu</span>
+        <button type="button" class="btn-close-nav" aria-label="Close navigation" title="Close"><i class="bi bi-x-lg"></i></button>
+      `;
+      navmenu.insertBefore(headerDiv, navmenu.firstChild);
+    }
+
+    // 4. Inject footer credits inside navmenu if not present
+    if (!navmenu.querySelector('.navmenu-footer')) {
+      const footerDiv = document.createElement('div');
+      footerDiv.className = 'navmenu-footer d-lg-none';
+      footerDiv.innerHTML = `
+        <div class="fw-bold text-success mb-0">AgriCulture AI Advisor</div>
+        <div>Harsh Kumawat · Harshul Bhanwar · Hariom Patidar</div>
+        <div class="text-muted" style="font-size: 10.5px;">Medi-Caps University</div>
+      `;
+      navmenu.appendChild(footerDiv);
+    }
+
+    const openMenu = () => {
+      navmenu.classList.add('mobile-nav-active');
+      backdrop.classList.add('active');
+      toggleBtn.classList.remove('bi-list');
+      toggleBtn.classList.add('bi-x');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('mobile-nav-open');
+    };
+
+    const closeMenu = () => {
+      navmenu.classList.remove('mobile-nav-active');
+      backdrop.classList.remove('active');
+      toggleBtn.classList.add('bi-list');
+      toggleBtn.classList.remove('bi-x');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('mobile-nav-open');
+    };
+
+    // Toggle button handler (Click & Touch)
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (navmenu.classList.contains('mobile-nav-active')) {
+        closeMenu();
+      } else {
+        openMenu();
       }
     });
 
-    // Close when clicking any nav link
+    // Enter/Space keyboard accessibility for toggle button
+    toggleBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleBtn.click();
+      }
+    });
+
+    // Internal close button handler
+    navmenu.addEventListener('click', (e) => {
+      const closeBtn = e.target.closest('.btn-close-nav');
+      if (closeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeMenu();
+        toggleBtn.focus();
+      }
+    });
+
+    // Backdrop click dismisses menu
+    backdrop.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeMenu();
+    });
+
+    // Close when tapping any navigation link
     navmenu.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
-        navmenu.classList.remove('mobile-nav-active');
-        toggleBtn.classList.add('bi-list');
-        toggleBtn.classList.remove('bi-x');
+        closeMenu();
       });
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && navmenu.classList.contains('mobile-nav-active')) {
+        closeMenu();
+        toggleBtn.focus();
+      }
     });
   }
 });
-
