@@ -70,10 +70,10 @@
     <div class="container">
       <ul class="nav nav-pills justify-content-center gap-2" id="kbTabs">
         <li class="nav-item">
-          <a class="nav-link active rounded-pill fw-semibold" href="#crops-section"><i class="bi bi-tree me-1"></i> 22 Crop Profiles</a>
+          <a class="nav-link active rounded-pill fw-semibold" href="#crops-section"><i class="bi bi-tree me-1"></i> {{ crops|length }} Crop Profiles</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link rounded-pill fw-semibold text-dark" href="#rules-section"><i class="bi bi-funnel me-1"></i> Production IF-THEN Rules</a>
+          <a class="nav-link rounded-pill fw-semibold text-dark" href="#rules-section"><i class="bi bi-funnel me-1"></i> Production Rules ({{ rules|length }})</a>
         </li>
         <li class="nav-item">
           <a class="nav-link rounded-pill fw-semibold text-dark" href="#fertilizers-section"><i class="bi bi-droplet-half me-1"></i> Fertilizer Chemistry & Dosage</a>
@@ -82,11 +82,11 @@
     </div>
   </div>
 
-  <!-- 22 Crops Section -->
+  <!-- Crops Section -->
   <section id="crops-section" class="section">
     <div class="container">
       <div class="section-title">
-        <h2>22 Crop Nutrient Requirements & Climates</h2>
+        <h2>{{ crops|length }} Crop Nutrient Requirements & Climates</h2>
         <p>Ideal N, P, K ranges and environmental tolerances referenced by the Inference Engine to detect soil deficiencies.</p>
       </div>
 
@@ -99,7 +99,7 @@
           </div>
         </div>
         <div class="col-md-4 text-md-end">
-          <span class="badge bg-light text-dark border p-2"><i class="bi bi-collection me-1 text-success"></i>Showing <span id="visibleCropCount">22</span> of 22 Crops</span>
+          <span class="badge bg-light text-dark border p-2"><i class="bi bi-collection me-1 text-success"></i>Showing <span id="visibleCropCount">{{ crops|length }}</span> of {{ crops|length }} Crops</span>
         </div>
       </div>
 
@@ -167,16 +167,16 @@
     </div>
   </section>
 
-  <!-- Production IF-THEN Rules Section -->
+  <!-- Production Rules Section -->
   <section id="rules-section" class="section bg-white border-top">
     <div class="container">
       <div class="section-title">
-        <h2>7. Production Rules for the Knowledge Base</h2>
+        <h2>Production Rules ({{ rules|length }})</h2>
         <p>Expert rules evaluated sequentially by the Inference Engine to recommend fertilizers, correct pH, and determine doses.</p>
       </div>
 
       <div class="table-responsive">
-        <table class="table table-bordered table-custom align-middle">
+        <table class="table table-bordered table-custom responsive-card-table align-middle">
           <thead>
             <tr>
               <th style="width: 12%;">Rule ID</th>
@@ -190,26 +190,26 @@
           <tbody>
             {% for rule in rules %}
             <tr>
-              <td class="fw-bold text-success">
+              <td data-label="Rule ID" class="fw-bold text-success">
                 <code>{{ rule.rule_id }}</code>
               </td>
-              <td>
+              <td data-label="Condition">
                 <i class="bi bi-arrow-right-short text-success fw-bold"></i>
                 <strong>{{ rule.condition_desc }}</strong>
               </td>
-              <td>
+              <td data-label="Advice">
                 <span class="badge bg-success-subtle text-success p-2 fs-6 d-inline-block mb-1">
                   {{ rule.suggested_fertilizer }}
                 </span>
                 <div class="small text-muted">{{ rule.advice }}</div>
               </td>
-              <td>
+              <td data-label="Target Nutrient">
                 <span class="badge bg-light text-dark border">{{ rule.target_nutrient }}</span>
               </td>
-              <td>
+              <td data-label="Priority">
                 <span class="badge bg-secondary">{{ rule.priority }}</span>
               </td>
-              <td>
+              <td data-label="Type">
                 <span class="badge {% if rule.rule_type == 'deficiency' %}bg-warning-subtle text-warning-emphasis{% elif rule.rule_type == 'soil_ph' %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %}">
                   {{ rule.rule_type }}
                 </span>
@@ -308,6 +308,9 @@
         <div class="col-md-6 text-center text-md-end small text-muted">
           <div>AgriCulture Smart Crop & Fertilizer Advisor Expert System</div>
           <div>Academic Subject Project • AgriTech</div>
+          <div class="mt-2 text-white-50" style="font-size: 11px;">
+            <i class="bi bi-shield-exclamation text-warning me-1"></i>Disclaimer: Academic project demonstration for Medi-Caps University. Verify recommendations with an agricultural extension officer or certified soil testing laboratory.
+          </div>
           <div class="mt-1 opacity-75">© 2026 All rights reserved.</div>
         </div>
       </div>

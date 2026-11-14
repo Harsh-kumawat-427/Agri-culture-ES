@@ -34,13 +34,51 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, 'static'),
     template_folder=os.path.join(BASE_DIR, 'templates')
 )
+app.secret_key = os.environ.get('SECRET_KEY', 'agritech-expert-system-session-key-2026')
 CORS(app)
+
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'agritech2026')
 
 # Initialize Core Expert System Engines
 kb = KnowledgeBase()
 predictor = CropPredictor()
 engine = InferenceEngine(kb)
 db = DatabaseManager()
+
+def check_is_admin():
+    """Validates admin privileges via session, cookie, query param, or header."""
+    from flask import session
+    if session.get('is_admin') is True:
+        return True
+    if request.cookies.get('admin_session') == 'active':
+        return True
+    auth_header = request.headers.get('X-Admin-Password')
+    if auth_header and auth_header == ADMIN_PASSWORD:
+        return True
+    url_key = request.args.get('key') or request.args.get('password') or request.args.get('admin_key')
+    if url_key and url_key == ADMIN_PASSWORD:
+        return True
+    return False
+
+CROP_ICONS = {
+    'rice': '🌾', 'maize': '🌽', 'cotton': '🌱', 'jute': '🌿',
+    'coffee': '☕', 'coconut': '🥥', 'apple': '🍎', 'pomegranate': '🍎',
+    'banana': '🍌', 'grapes': '🍇', 'mango': '🥭', 'orange': '🍊',
+    'papaya': '🫐', 'watermelon': '🍉', 'muskmelon': '🍈',
+    'chickpea': '🫘', 'kidneybeans': '🫘', 'pigeonpeas': '🫘',
+    'mothbeans': '🫘', 'mungbean': '🫘', 'blackgram': '🫘', 'lentil': '🫘'
+}
+
+@app.context_processor
+def inject_global_data():
+    return {
+        'crop_count': len(kb.crop_requirements),
+        'rule_count': len(kb.rules),
+        'fert_count': len(kb.fertilizers),
+        'crop_dict': kb.crop_requirements,
+        'all_crops': kb.get_all_crops(),
+        'crop_icons': CROP_ICONS
+    }
  
 # --- WEB PAGE ROUTES ---
  
@@ -80,19 +118,72 @@ def knowledge():
  
 @app.route('/history')
 def history():
-    """Serves historical consultation records and audit log stored in SQLite."""
-    records = db.fetch_history(limit=100)
+    """Serves historical consultation records. Anonymizes personal data unless admin is logged in."""
+    is_admin = check_is_admin()
+    records = db.fetch_history(limit=100, anonymize=(not is_admin))
     stats = db.get_statistics()
-    return render_template('history.html', history=records, stats=stats)
- 
-@app.route('/report/<int:rec_id>')
+    return render_template('history.html', history=records, stats=stats, is_admin=is_admin)
+
+@app.route('/report/<rec_id>')
 def report(rec_id):
-    """Serves printable official farm advisory report for a specific consultation."""
-    record = db.fetch_by_id(rec_id)
-    if not record:
-        return "<h3>Consultation record not found</h3><a href='/history'>Return to History</a>", 404
+    """Serves printable farm advisory report for a specific consultation token or demo."""
+    if str(rec_id).lower() == 'demo':
+        history_records = db.fetch_history(limit=1, anonymize=False)
+        record = history_records[0] if history_records else None
+        if not record:
+            record = {
+                'id': 1,
+                'report_id': 'agr_demo',
+                'timestamp': '2026-11-14 10:00:00',
+                'farmer_name': 'Ramesh Kumar',
+                'location': 'Plot #4 North Field',
+                'soil_type': 'Loamy',
+                'N': 40, 'P': 48, 'K': 40, 'ph': 6.5,
+                'temperature': 24, 'humidity': 82, 'rainfall': 230,
+                'predicted_crop': 'Rice (Paddy)',
+                'confidence': 99.3,
+                'recommended_fertilizer': 'Urea',
+                'dosage_kg_ha': 87.0,
+                'dosage_kg_acre': 35.2,
+                'explanation': '[EXPLANATION FACILITY AUDIT]\n• Input Nitrogen level (40 kg/ha) is deficient for optimal Rice tillering (requires 80 kg/ha).\n• Forward-Chaining Rule R02 fired: Recommended Urea @ 87.0 kg/ha (35.2 kg/acre).\n• Growth duration (110 - 150 days) safely fits within farmer available fallow gap (160 days) with +10 days buffer.'
+            }
+    else:
+        record = db.fetch_by_id(rec_id)
+        if not record:
+            return "<h3>Consultation record not found</h3><p>The advisory report token may be invalid or expired.</p><a href='/history'>Return to Consultation Records</a>", 404
+
     crop_info = kb.get_crop_requirements(record.get('predicted_crop', ''))
     return render_template('report.html', record=record, crop_info=crop_info)
+
+@app.route('/api/admin/login', methods=['POST'])
+def api_admin_login():
+    """Authenticates admin user to unlock personal farmer records and CSV exports."""
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    pwd = data.get('password', '').strip()
+    if pwd == ADMIN_PASSWORD:
+        from flask import session, make_response
+        session['is_admin'] = True
+        resp = make_response(jsonify({"status": "success", "message": "Admin authenticated successfully"}))
+        resp.set_cookie('admin_session', 'active', max_age=86400, httponly=True, samesite='Lax')
+        return resp
+    return jsonify({"error": "Invalid admin password. Check ADMIN_PASSWORD environment variable."}), 401
+
+@app.route('/api/admin/logout', methods=['POST', 'GET'])
+def api_admin_logout():
+    """Logs out admin user and restores anonymized data view."""
+    from flask import session, make_response
+    session.pop('is_admin', None)
+    if request.method == 'GET':
+        resp = make_response(redirect(url_for('history')))
+    else:
+        resp = make_response(jsonify({"status": "logged_out"}))
+    resp.delete_cookie('admin_session')
+    return resp
+
+@app.route('/api/admin/status', methods=['GET'])
+def api_admin_status():
+    """Checks whether caller has verified admin access."""
+    return jsonify({"is_admin": check_is_admin()}), 200
  
 # --- STATIC ASSET COMPATIBILITY ROUTE ---
  
@@ -155,14 +246,22 @@ def api_predict():
         if crop_reqs:
             min_days = crop_reqs.get('duration_min_days', 90)
             max_days = crop_reqs.get('duration_max_days', 120)
-            fits_gap = max_days <= harvest_gap_days
             buffer_days = harvest_gap_days - max_days
+            if harvest_gap_days >= max_days:
+                fit_status = "Fits Safely"
+            elif harvest_gap_days >= min_days:
+                fit_status = "Tight Fit"
+            else:
+                fit_status = "Does Not Fit"
             rec_report['temporal_context'] = {
                 'season_time': season_time,
                 'prev_crop': prev_crop,
                 'harvest_gap_days': harvest_gap_days,
                 'crop_duration': crop_reqs.get('growth_duration_days', f"{min_days}-{max_days} days"),
-                'fits_harvest_gap': fits_gap,
+                'crop_duration_min': min_days,
+                'crop_duration_max': max_days,
+                'fit_status': fit_status,
+                'fits_harvest_gap': (fit_status == "Fits Safely"),
                 'buffer_days': buffer_days,
                 'suitable_seasons': crop_reqs.get('suitable_seasons', []),
                 'rotation_role': crop_reqs.get('rotation_role', 'Standard Crop'),
@@ -182,10 +281,16 @@ def api_predict():
             recommendation_report=rec_report,
             confidence=conf
         )
- 
+
+        saved_rec = db.fetch_by_id(rec_id)
+        report_token = (saved_rec.get('report_id') if saved_rec else None) or str(rec_id)
+
         return jsonify({
             "status": "success",
-            "consultation_id": rec_id,
+            "consultation_id": report_token,
+            "report_id": report_token,
+            "numeric_id": rec_id,
+            "report_url": f"/report/{report_token}",
             "soil": soil.to_dict(),
             "confidence": conf,
             "recommendation": rec_report
@@ -227,22 +332,23 @@ def api_recommend_rotation():
  
 @app.route('/api/history', methods=['GET'])
 def api_history():
-    """Fetches consultation records or exports to CSV."""
-    records = db.fetch_history(limit=200)
+    """Fetches consultation records or exports to CSV. Protects personal farmer info unless authenticated."""
+    is_admin = check_is_admin()
+    records = db.fetch_history(limit=200, anonymize=(not is_admin))
     export_format = request.args.get('format', '').lower()
  
     if export_format == 'csv':
         si = io.StringIO()
         writer = csv.writer(si)
         writer.writerow([
-            'ID', 'Timestamp', 'Farmer Name', 'Location', 'Soil Type',
+            'Report Token', 'ID', 'Timestamp', 'Farmer Name', 'Location', 'Soil Type',
             'N', 'P', 'K', 'pH', 'Temperature', 'Humidity', 'Rainfall',
             'Predicted Crop', 'Confidence (%)', 'Recommended Fertilizer',
             'Dosage (kg/ha)', 'Dosage (kg/acre)', 'Explanation'
         ])
         for r in records:
             writer.writerow([
-                r['id'], r['timestamp'], r['farmer_name'], r['location'], r['soil_type'],
+                r.get('report_id', f"agr_{r['id']}"), r['id'], r['timestamp'], r['farmer_name'], r['location'], r['soil_type'],
                 r['N'], r['P'], r['K'], r['ph'], r['temperature'], r['humidity'], r['rainfall'],
                 r['predicted_crop'], r['confidence'], r['recommended_fertilizer'],
                 r['dosage_kg_ha'], r['dosage_kg_acre'], r['explanation']
@@ -254,7 +360,7 @@ def api_history():
             headers={"Content-Disposition": "attachment;filename=agritech_consultations.csv"}
         )
  
-    return jsonify({"history": records}), 200
+    return jsonify({"history": records, "is_admin": is_admin}), 200
  
 @app.route('/api/history/<int:rec_id>', methods=['GET'])
 def api_get_record(rec_id):

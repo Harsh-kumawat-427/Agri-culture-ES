@@ -168,23 +168,26 @@
   <section class="section">
     <div class="container">
 
-      <!-- Preset Quick-Select Chips -->
+      <!-- Preset Quick-Select Chips (Horizontally Swipeable Row) -->
       <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 14px; background: #ffffff;">
-        <div class="d-flex align-items-center flex-wrap gap-2">
-          <span class="fw-bold me-2 text-dark"><i class="bi bi-lightning-charge text-warning me-1"></i>Quick Rotation Presets:</span>
-          <button class="preset-chip" onclick="applyRotationPreset('summer_after_rice')">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="fw-bold text-dark small"><i class="bi bi-lightning-charge text-warning me-1"></i>Quick Rotation Presets:</span>
+          <span class="text-muted small" style="font-size: 11px;"><i class="bi bi-arrow-left-right me-1"></i>Swipe horizontally</span>
+        </div>
+        <div class="preset-swipeable-row">
+          <button type="button" class="preset-chip" onclick="applyRotationPreset('summer_after_rice')">
             🌾 75-Day Summer Window after Rice (Mungbean / Catch Crop)
           </button>
-          <button class="preset-chip" onclick="applyRotationPreset('winter_after_maize')">
+          <button type="button" class="preset-chip" onclick="applyRotationPreset('winter_after_maize')">
             🌽 110-Day Winter Window after Maize (Chickpea / Wheat)
           </button>
-          <button class="preset-chip" onclick="applyRotationPreset('cotton_rotation')">
+          <button type="button" class="preset-chip" onclick="applyRotationPreset('cotton_rotation')">
             🌱 160-Day Kharif Window (Cotton / Black Soil)
           </button>
-          <button class="preset-chip" onclick="applyRotationPreset('arid_catch')">
+          <button type="button" class="preset-chip" onclick="applyRotationPreset('arid_catch')">
             🏜️ 70-Day Arid Sandy Fallow (Moth Beans)
           </button>
-          <button class="preset-chip" onclick="applyRotationPreset('full_season')">
+          <button type="button" class="preset-chip" onclick="applyRotationPreset('full_season')">
             ☀️ Full Year / No Gap Restriction (Annual / Perennial)
           </button>
         </div>
@@ -221,11 +224,14 @@
 
               <!-- Soil Reaction (pH) -->
               <div class="mb-3">
-                <div class="form-label">
+                <div class="form-label d-flex justify-content-between align-items-center">
                   <span>Soil pH Reaction</span>
                   <span class="unit"><strong id="val_rot_ph">6.5</strong> pH</span>
                 </div>
-                <input type="range" class="form-range" id="range_rot_ph" min="4.0" max="9.0" step="0.1" value="6.5" oninput="document.getElementById('val_rot_ph').innerText = this.value">
+                <div class="d-flex align-items-center gap-3">
+                  <input type="range" class="form-range" id="range_rot_ph" min="4.0" max="9.0" step="0.1" value="6.5" oninput="syncRotPh(this.value)">
+                  <input type="number" class="form-control form-control-sm w-80" id="input_rot_ph" min="4.0" max="9.0" step="0.1" value="6.5" inputmode="decimal" oninput="syncRotPh(this.value)">
+                </div>
               </div>
 
               <hr class="my-3 text-muted">
@@ -236,32 +242,37 @@
                   <span><i class="bi bi-calendar3 text-success me-1"></i>Time of Year / Sowing Season</span>
                 </label>
                 <select class="form-select" id="rot_time_of_year">
-                  <option value="Zaid (Summer: March - June)" selected>Zaid (Summer: March - June / Short Catch Period)</option>
-                  <option value="Kharif (Monsoon: June - October)">Kharif (Monsoon: June - October / Wet Season)</option>
-                  <option value="Rabi (Winter: October - March)">Rabi (Winter: October - March / Cool Dry Season)</option>
-                  <option value="Spring (February - April)">Spring Season (February - April)</option>
-                  <option value="All Year / Any Season">All Year / Any Season</option>
+                  <option value="Kharif (Monsoon: June - October)">Kharif (Monsoon: June - October)</option>
+                  <option value="Rabi (Winter: October - March)">Rabi (Winter: October - March)</option>
+                  <option value="Zaid (Summer: March - June)" selected>Zaid (Summer: March - June)</option>
+                  <option value="All Year / Perennial">All Year / Perennial</option>
                 </select>
               </div>
 
               <!-- 3. Ambient Temperature -->
               <div class="mb-3">
-                <div class="form-label">
+                <div class="form-label d-flex justify-content-between align-items-center">
                   <span><i class="bi bi-thermometer-half text-danger me-1"></i>Ambient Temperature (°C)</span>
                   <span class="unit"><strong id="val_rot_temp">28.0</strong> °C</span>
                 </div>
-                <input type="range" class="form-range" id="range_rot_temp" min="8" max="45" step="0.5" value="28.0" oninput="document.getElementById('val_rot_temp').innerText = parseFloat(this.value).toFixed(1)">
+                <div class="d-flex align-items-center gap-3">
+                  <input type="range" class="form-range" id="range_rot_temp" min="8" max="45" step="0.5" value="28.0" oninput="syncRotTemp(this.value)">
+                  <input type="number" class="form-control form-control-sm w-80" id="input_rot_temp" min="8" max="45" step="0.5" value="28.0" inputmode="decimal" oninput="syncRotTemp(this.value)">
+                </div>
               </div>
 
               <hr class="my-3 text-muted">
 
               <!-- 4. Time Between Two Crop Harvesting (Fallow Gap in Days) -->
               <div class="mb-4">
-                <div class="form-label">
+                <div class="form-label d-flex justify-content-between align-items-center">
                   <span><i class="bi bi-hourglass-split text-warning me-1"></i>Time Between Two Crop Harvesting</span>
                   <span class="unit"><strong id="val_rot_gap">75</strong> Days Available</span>
                 </div>
-                <input type="range" class="form-range" id="range_rot_gap" min="45" max="365" step="5" value="75" oninput="document.getElementById('val_rot_gap').innerText = (this.value >= 330 ? '365+ (Full Year)' : this.value + ' Days')">
+                <div class="d-flex align-items-center gap-3">
+                  <input type="range" class="form-range" id="range_rot_gap" min="45" max="365" step="5" value="75" oninput="syncRotGap(this.value)">
+                  <input type="number" class="form-control form-control-sm w-80" id="input_rot_gap" min="45" max="365" step="5" value="75" inputmode="numeric" oninput="syncRotGap(this.value)">
+                </div>
                 <div class="d-flex justify-content-between text-muted small mt-1" style="font-size: 11px;">
                   <span>45d (Catch crop)</span>
                   <span>90d (Short)</span>
@@ -395,12 +406,12 @@
               </div>
 
               <!-- Action Buttons (Strictly hidden during print) -->
-              <div class="d-flex gap-2 mt-4 pt-3 border-top no-print">
-                <a href="/" class="btn btn-agri flex-fill">
-                  <i class="bi bi-arrow-right-circle me-1"></i> Open in Fertilizer Advisor Form
+              <div class="d-flex gap-2 mt-4 pt-3 border-top no-print flex-wrap">
+                <a href="/advisor" class="btn btn-agri flex-fill py-2">
+                  <i class="bi bi-arrow-right-circle me-1"></i> Open in Fertilizer Advisor Studio
                 </a>
-                <button type="button" class="btn btn-agri-outline flex-fill" onclick="window.print()">
-                  <i class="bi bi-printer me-1"></i> Print Rotation Plan
+                <button type="button" class="btn btn-agri-outline flex-fill py-2" onclick="window.print()">
+                  <i class="bi bi-printer me-1"></i> Print / Download PDF Plan
                 </button>
               </div>
 
@@ -516,6 +527,9 @@
         <div class="col-md-6 text-center text-md-end small text-muted">
           <div>AgriCulture Smart Crop & Fertilizer Advisor Expert System</div>
           <div>Academic Subject Project • AgriTech</div>
+          <div class="mt-2 text-white-50" style="font-size: 11px;">
+            <i class="bi bi-shield-exclamation text-warning me-1"></i>Disclaimer: Academic project demonstration for Medi-Caps University. Verify recommendations with an agricultural extension officer or certified soil testing laboratory.
+          </div>
           <div class="mt-1 opacity-75">© 2026 All rights reserved.</div>
         </div>
       </div>
@@ -549,21 +563,41 @@
       }
     };
 
+    function syncRotPh(val) {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        document.getElementById('range_rot_ph').value = num;
+        document.getElementById('input_rot_ph').value = num;
+        document.getElementById('val_rot_ph').innerText = num.toFixed(1);
+      }
+    }
+
+    function syncRotTemp(val) {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        document.getElementById('range_rot_temp').value = num;
+        document.getElementById('input_rot_temp').value = num;
+        document.getElementById('val_rot_temp').innerText = num.toFixed(1);
+      }
+    }
+
+    function syncRotGap(val) {
+      const num = parseInt(val);
+      if (!isNaN(num)) {
+        document.getElementById('range_rot_gap').value = num;
+        document.getElementById('input_rot_gap').value = num;
+        document.getElementById('val_rot_gap').innerText = (num >= 330 ? '365+ (Full Year)' : num + ' Days');
+      }
+    }
+
     function applyRotationPreset(name) {
       const p = ROTATION_PRESETS[name];
       if (!p) return;
       document.getElementById('rot_soil_condition').value = p.soil;
-      document.getElementById('range_rot_ph').value = p.ph;
-      document.getElementById('val_rot_ph').innerText = p.ph;
-
+      syncRotPh(p.ph);
       document.getElementById('rot_time_of_year').value = p.time;
-
-      document.getElementById('range_rot_temp').value = p.temp;
-      document.getElementById('val_rot_temp').innerText = p.temp.toFixed(1);
-
-      document.getElementById('range_rot_gap').value = p.gap;
-      document.getElementById('val_rot_gap').innerText = (p.gap >= 330 ? '365+ (Full Year)' : p.gap + ' Days');
-
+      syncRotTemp(p.temp);
+      syncRotGap(p.gap);
       document.getElementById('rot_prev_crop').value = p.prev;
     }
 
@@ -632,17 +666,22 @@
       const bufferDays = document.getElementById('rot-res-buffer-days');
 
       if (inp.harvest_gap_days >= 300) {
-        bufferBadge.className = 'badge bg-success-subtle text-success border border-success';
-        bufferBadge.innerText = 'Full Season Availability';
+        bufferBadge.className = 'badge bg-success text-white border border-success';
+        bufferBadge.innerText = 'Full Season Availability (Fits Safely)';
         bufferDays.innerText = 'No Window Limit';
-      } else if (buffer >= 0) {
-        bufferBadge.className = 'badge bg-success-subtle text-success border border-success';
-        bufferBadge.innerText = 'Safe Buffer Before Next Crop';
+      } else if (inp.harvest_gap_days >= top.duration_max) {
+        bufferBadge.className = 'badge bg-success text-white border border-success';
+        bufferBadge.innerText = 'Fits Safely';
         bufferDays.innerText = `+${buffer} Days Buffer`;
+      } else if (inp.harvest_gap_days >= top.duration_min) {
+        bufferBadge.className = 'badge bg-warning text-dark border border-warning';
+        bufferBadge.innerText = 'Tight Fit';
+        bufferDays.innerText = `${buffer} Days (${inp.harvest_gap_days}d vs ${top.duration_min}-${top.duration_max}d)`;
       } else {
-        bufferBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning';
-        bufferBadge.innerText = 'Tight Harvest Window';
-        bufferDays.innerText = `Early Harvest (${top.duration_min}d)`;
+        bufferBadge.className = 'badge bg-danger text-white border border-danger';
+        bufferBadge.innerText = 'Does Not Fit';
+        const deficit = top.duration_min - inp.harvest_gap_days;
+        bufferDays.innerText = `${buffer} Days (Deficit: ${deficit}d min)`;
       }
 
       // Explanation narrative
@@ -656,16 +695,26 @@
       altContainer.innerHTML = '';
       if (data.top_alternatives && data.top_alternatives.length > 0) {
         data.top_alternatives.forEach(alt => {
+          const altBuffer = inp.harvest_gap_days - alt.duration_max;
+          let altBadgeClass = 'bg-success text-white';
+          let altBadgeText = 'Fits';
+          if (inp.harvest_gap_days < alt.duration_min) {
+            altBadgeClass = 'bg-danger text-white';
+            altBadgeText = 'Does Not Fit';
+          } else if (inp.harvest_gap_days < alt.duration_max) {
+            altBadgeClass = 'bg-warning text-dark';
+            altBadgeText = 'Tight';
+          }
           const col = document.createElement('div');
           col.className = 'col-md-4';
           col.innerHTML = `
             <div class="p-3 bg-light rounded-3 border h-100">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <strong class="text-dark">${alt.display_name}</strong>
-                <span class="badge bg-secondary-subtle text-secondary">${alt.suitability_score}%</span>
+                <span class="badge ${altBadgeClass} px-2 py-1" style="font-size: 10px;">${altBadgeText}</span>
               </div>
-              <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i>${alt.duration_days}</div>
-              <div class="small text-muted" style="font-size: 11px;">${alt.category}</div>
+              <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i>${alt.duration_days} (Buffer: ${altBuffer >= 0 ? '+' : ''}${altBuffer}d)</div>
+              <div class="small text-muted" style="font-size: 11px;">${alt.category} • Match: ${alt.suitability_score}%</div>
             </div>
           `;
           altContainer.appendChild(col);

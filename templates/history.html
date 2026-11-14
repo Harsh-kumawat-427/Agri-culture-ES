@@ -119,10 +119,10 @@
               <i class="bi bi-droplet-half"></i>
             </div>
             <div>
-              <div class="text-muted small">Top Fertilizer</div>
-              <h5 class="fw-bold mb-0 text-dark">
-                {% if stats.top_fertilizers %}{{ stats.top_fertilizers[0].fertilizer[:14] }}{% else %}None{% endif %}
-              </h5>
+              <div class="text-muted small">Top Prescribed Fertilizer</div>
+              <h6 class="fw-bold mb-0 text-dark text-truncate" style="max-width: 170px;" title="{% if stats.top_fertilizers %}{{ stats.top_fertilizers[0].fertilizer }}{% endif %}">
+                {% if stats.top_fertilizers %}{{ stats.top_fertilizers[0].fertilizer }}{% else %}None{% endif %}
+              </h6>
             </div>
           </div>
         </div>
@@ -140,6 +140,35 @@
         </div>
       </div>
 
+      <!-- Privacy & Admin Protection Banner -->
+      {% if not is_admin %}
+      <div class="alert alert-light border border-success-subtle py-2 px-3 small mb-4 rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-shield-lock-fill text-success fs-5"></i>
+          <div>
+            <strong class="text-dark">Privacy Mode Active:</strong>
+            <span class="text-muted">Farmer names and plot coordinates are anonymized in public view. Admin password is required to reveal full farmer records and unmasked CSV export.</span>
+          </div>
+        </div>
+        <button class="btn btn-outline-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+          <i class="bi bi-key-fill me-1"></i>Admin Login
+        </button>
+      </div>
+      {% else %}
+      <div class="alert alert-success border-success py-2 px-3 small mb-4 rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-unlock-fill text-success fs-5"></i>
+          <div>
+            <strong class="text-success-emphasis">Admin Access Verified:</strong>
+            <span class="text-dark">Full unmasked farmer names, plot locations, and administrative record deletion unlocked.</span>
+          </div>
+        </div>
+        <a href="/api/admin/logout" class="btn btn-outline-danger btn-sm px-3">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout Admin
+        </a>
+      </div>
+      {% endif %}
+
       <!-- Action & Search Bar -->
       <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 14px;">
         <div class="row g-3 align-items-center justify-content-between">
@@ -149,10 +178,19 @@
               <input type="text" class="form-control border-start-0" id="historySearchInput" placeholder="Filter by farmer name, location, crop or fertilizer..." onkeyup="filterHistoryTable()">
             </div>
           </div>
-          <div class="col-md-6 text-md-end d-flex gap-2 justify-content-md-end">
+          <div class="col-md-7 text-md-end d-flex flex-wrap gap-2 justify-content-md-end align-items-center">
             <button class="btn btn-agri-outline btn-sm" onclick="exportHistoryCSV()">
-              <i class="bi bi-download me-1"></i> Export to CSV
+              <i class="bi bi-download me-1"></i>{% if is_admin %}Export Full CSV{% else %}Export Anonymized CSV{% endif %}
             </button>
+            {% if not is_admin %}
+            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+              <i class="bi bi-shield-lock me-1"></i>Admin
+            </button>
+            {% else %}
+            <a href="/api/admin/logout" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </a>
+            {% endif %}
             <a href="/advisor" class="btn btn-agri btn-sm">
               <i class="bi bi-plus-circle me-1"></i> New Consultation
             </a>
@@ -162,7 +200,7 @@
 
       <!-- History Records Table -->
       <div class="table-responsive">
-        <table class="table table-bordered table-custom align-middle" id="historyTable">
+        <table class="table table-bordered table-custom responsive-card-table align-middle" id="historyTable">
           <thead>
             <tr>
               <th style="width: 5%;">ID</th>
@@ -177,13 +215,13 @@
           <tbody>
             {% for item in history %}
             <tr class="history-row" data-search="{{ item.farmer_name|lower }} {{ item.location|lower }} {{ item.predicted_crop|lower }} {{ item.recommended_fertilizer|lower }}">
-              <td><span class="badge bg-light text-dark border">#{{ item.id }}</span></td>
-              <td class="small text-muted">{{ item.timestamp }}</td>
-              <td>
+              <td data-label="ID"><span class="badge bg-light text-secondary border font-monospace" style="font-size: 11px;">{{ item.report_id if item.report_id else ('#' ~ item.id) }}</span></td>
+              <td data-label="Date & Time" class="small text-muted">{{ item.timestamp }}</td>
+              <td data-label="Farmer & Field">
                 <div class="fw-bold text-dark">{{ item.farmer_name }}</div>
                 <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>{{ item.location }} <span class="badge bg-light text-secondary ms-1">{{ item.soil_type }}</span></div>
               </td>
-              <td>
+              <td data-label="Soil Chemistry">
                 <div class="small">
                   <strong>N:</strong> {{ item.N|int }} | <strong>P:</strong> {{ item.P|int }} | <strong>K:</strong> {{ item.K|int }}
                 </div>
@@ -191,13 +229,13 @@
                   pH: {{ item.ph }} | {{ item.rainfall|int }} mm rain
                 </div>
               </td>
-              <td>
+              <td data-label="Predicted Crop">
                 <span class="badge bg-success-subtle text-success fs-6 fw-semibold px-2 py-1">
                   {{ item.predicted_crop }}
                 </span>
                 <div class="small text-muted mt-1">{{ item.confidence }}% Confidence</div>
               </td>
-              <td>
+              <td data-label="Fertilizer & Dose">
                 <div class="fw-semibold text-dark">{{ item.recommended_fertilizer }}</div>
                 {% if item.dosage_kg_ha > 0 %}
                 <span class="badge bg-warning-subtle text-warning-emphasis">
@@ -207,20 +245,22 @@
                 <span class="badge bg-secondary-subtle text-secondary">Balanced</span>
                 {% endif %}
               </td>
-              <td>
+              <td data-label="Actions">
                 <div class="d-flex gap-1 flex-wrap">
-                  <a href="/report/{{ item.id }}" target="_blank" class="btn btn-sm btn-outline-success" title="View Full Official Report">
-                    <i class="bi bi-file-earmark-text"></i> Report
+                  <a href="/report/{{ item.report_id if item.report_id else item.id }}" target="_blank" class="btn btn-sm btn-outline-success" title="View Advisory Report">
+                    <i class="bi bi-file-earmark-text me-1"></i>Report
                   </a>
-                  <a href="/report/{{ item.id }}?autoprint=1" target="_blank" class="btn btn-sm btn-outline-secondary" title="Direct Print Report">
-                    <i class="bi bi-printer"></i>
+                  <a href="/report/{{ item.report_id if item.report_id else item.id }}?autoprint=1" target="_blank" class="btn btn-sm btn-outline-secondary" title="Direct Print Report">
+                    <i class="bi bi-printer me-1"></i>Print
                   </a>
                   <button class="btn btn-sm btn-outline-primary" onclick="showExplanationModal('{{ item.id }}', '{{ item.farmer_name }}', '{{ item.predicted_crop }}', {{ item.explanation|tojson|safe }})" title="View Reasoning">
                     <i class="bi bi-eye"></i> Reason
                   </button>
+                  {% if is_admin %}
                   <button class="btn btn-sm btn-outline-danger" onclick="deleteRecord({{ item.id }})" title="Delete Record">
                     <i class="bi bi-trash"></i>
                   </button>
+                  {% endif %}
                 </div>
               </td>
             </tr>
@@ -264,6 +304,40 @@
     </div>
   </div>
 
+  <!-- Admin Authentication Modal -->
+  <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Admin Authentication</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="modal-body p-4">
+            <p class="text-muted small mb-3">
+              Enter the administrator password to reveal unmasked farmer names, private plot coordinates, and enable full CSV database export.
+            </p>
+            <div id="adminLoginAlert" class="alert alert-danger d-none py-2 small mb-3"></div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Admin Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-key text-muted"></i></span>
+                <input type="password" class="form-control" id="adminPasswordInput" placeholder="Enter admin password..." required autofocus>
+              </div>
+              <div class="form-text" style="font-size: 11px;">Configured securely via environment variable <code>ADMIN_PASSWORD</code>.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-agri btn-sm" id="btnAdminSubmit">
+              <i class="bi bi-unlock me-1"></i>Authenticate
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
@@ -278,6 +352,9 @@
         <div class="col-md-6 text-center text-md-end small text-muted">
           <div>AgriCulture Smart Crop & Fertilizer Advisor Expert System</div>
           <div>Academic Subject Project • AgriTech</div>
+          <div class="mt-2 text-white-50" style="font-size: 11px;">
+            <i class="bi bi-shield-exclamation text-warning me-1"></i>Disclaimer: Academic project demonstration for Medi-Caps University. Verify recommendations with an agricultural extension officer or certified soil testing laboratory.
+          </div>
           <div class="mt-1 opacity-75">© 2026 All rights reserved.</div>
         </div>
       </div>
@@ -326,6 +403,38 @@
 
     function exportHistoryCSV() {
       window.location.href = '/api/history?format=csv';
+    }
+
+    async function handleAdminLogin(event) {
+      event.preventDefault();
+      const pwd = document.getElementById('adminPasswordInput').value;
+      const alertBox = document.getElementById('adminLoginAlert');
+      const submitBtn = document.getElementById('btnAdminSubmit');
+      alertBox.classList.add('d-none');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verifying...';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          window.location.reload();
+        } else {
+          alertBox.innerText = data.error || 'Authentication failed. Please check password.';
+          alertBox.classList.remove('d-none');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-unlock me-1"></i>Authenticate';
+        }
+      } catch (err) {
+        alertBox.innerText = 'Network error: ' + err.message;
+        alertBox.classList.remove('d-none');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-unlock me-1"></i>Authenticate';
+      }
     }
   </script>
 </body>

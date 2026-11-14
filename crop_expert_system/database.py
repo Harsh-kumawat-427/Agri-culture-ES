@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import tempfile
+import secrets
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -59,12 +60,13 @@ class DatabaseManager:
         return conn
 
     def init_db(self):
-        """Creates recommendations history table if it doesn't already exist."""
+        """Creates recommendations history table and ensures report_id column exists."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS recommendations_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    report_id TEXT UNIQUE,
                     timestamp TEXT NOT NULL,
                     farmer_name TEXT DEFAULT 'Farmer',
                     location TEXT DEFAULT 'Farm Field #1',
@@ -88,6 +90,46 @@ class DatabaseManager:
             """)
             conn.commit()
 
+            # Check if report_id column exists in existing database
+            cursor.execute("PRAGMA table_info(recommendations_history)")
+            cols = [info[1] for info in cursor.fetchall()]
+            if "report_id" not in cols:
+                cursor.execute("ALTER TABLE recommendations_history ADD COLUMN report_id TEXT")
+                conn.commit()
+
+            # Populate missing report_ids for existing rows
+            cursor.execute("SELECT id FROM recommendations_history WHERE report_id IS NULL OR report_id = ''")
+            missing_rows = cursor.fetchall()
+            for r in missing_rows:
+                token = f"agr_{secrets.token_hex(4)}"
+                cursor.execute("UPDATE recommendations_history SET report_id = ? WHERE id = ?", (token, r["id"]))
+            conn.commit()
+
+            try:
+                cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_rec_report_id ON recommendations_history(report_id)")
+                conn.commit()
+            except Exception:
+                pass
+
+    def generate_report_token(self) -> str:
+        """Generates random secure unguessable report token."""
+        return f"agr_{secrets.token_hex(4)}"
+
+    def cleanup_test_data(self):
+        """Removes 'Test Farmer' test rows and deduplicates rows in the live database."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM recommendations_history WHERE farmer_name LIKE '%Test Farmer%' OR location LIKE '%Unit Test%'")
+            cursor.execute("""
+                DELETE FROM recommendations_history
+                WHERE id NOT IN (
+                    SELECT MIN(id)
+                    FROM recommendations_history
+                    GROUP BY farmer_name, location, predicted_crop, recommended_fertilizer, N, P, K
+                )
+            """)
+            conn.commit()
+
     def save_history(
         self,
         farmer_name: str,
@@ -97,19 +139,21 @@ class DatabaseManager:
         recommendation_report: Dict[str, Any],
         confidence: float
     ) -> int:
-        """Saves a completed expert consultation into SQLite."""
+        """Saves a completed expert consultation into SQLite with random unguessable report_id."""
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        report_id = self.generate_report_token()
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO recommendations_history (
-                    timestamp, farmer_name, location, soil_type,
+                    report_id, timestamp, farmer_name, location, soil_type,
                     N, P, K, ph, temperature, humidity, rainfall,
                     predicted_crop, confidence, recommended_fertilizer,
                     dosage_kg_ha, dosage_kg_acre, explanation,
                     fired_rules_json, nutrient_gaps_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
+                report_id,
                 ts,
                 farmer_name or "Farmer",
                 location or "Farm Field #1",
@@ -133,8 +177,8 @@ class DatabaseManager:
             conn.commit()
             return cursor.lastrowid
 
-    def fetch_history(self, limit: int = 50) -> List[Dict[str, Any]]:
-        """Retrieves most recent consultations in descending order."""
+    def fetch_history(self, limit: int = 50, anonymize: bool = False) -> List[Dict[str, Any]]:
+        """Retrieves most recent consultations in descending order, with optional anonymization."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -143,15 +187,40 @@ class DatabaseManager:
                 LIMIT ?
             """, (limit,))
             rows = cursor.fetchall()
-            return [dict(row) for row in rows]
+            results = []
+            for row in rows:
+                r = dict(row)
+                if not r.get("report_id"):
+                    r["report_id"] = f"agr_{r['id']:04d}"
+                if anonymize:
+                    r["farmer_name"] = f"Farmer #{r['id']:03d}"
+                    r["location"] = f"Field Plot #{r['id']:02d} [Protected]"
+                results.append(r)
+            return results
 
-    def fetch_by_id(self, rec_id: int) -> Optional[Dict[str, Any]]:
-        """Fetches individual consultation record by ID."""
+    def fetch_by_id(self, rec_id_or_token: Any) -> Optional[Dict[str, Any]]:
+        """Fetches individual consultation record by random report_id or legacy integer ID."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM recommendations_history WHERE id = ?", (rec_id,))
+            # Try matching random report_id token first
+            cursor.execute("SELECT * FROM recommendations_history WHERE report_id = ?", (str(rec_id_or_token),))
             row = cursor.fetchone()
-            return dict(row) if row else None
+            if row:
+                r = dict(row)
+                if not r.get("report_id"):
+                    r["report_id"] = str(rec_id_or_token)
+                return r
+
+            # Fall back to matching numeric integer ID
+            if str(rec_id_or_token).isdigit():
+                cursor.execute("SELECT * FROM recommendations_history WHERE id = ?", (int(rec_id_or_token),))
+                row = cursor.fetchone()
+                if row:
+                    r = dict(row)
+                    if not r.get("report_id"):
+                        r["report_id"] = f"agr_{r['id']:04d}"
+                    return r
+            return None
 
     def delete_history(self, rec_id: int) -> bool:
         """Deletes a recommendation record."""

@@ -198,6 +198,32 @@ python test_expert_system.py
 
 ---
 
+## 🔐 Environment Variables & Security (Vercel)
+In your Vercel Project Settings → **Environment Variables**, you can configure:
+- `ADMIN_PASSWORD`: Custom administrator password to unlock full unmasked farmer consultation records and unmasked CSV exports (default fallback: `agritech2026`).
+- `SECRET_KEY`: Secure session secret key for Flask session cookie encryption.
+
+## 💾 Data Persistence on Vercel
+Vercel Serverless Functions execute in stateless ephemeral environments where only `/tmp` is writable.
+1. **Default Mode (Zero-Config)**: The application automatically seeds and manages the database in `/tmp/expert_system_history.db`. Consultation records created during active serverless instances persist in `/tmp` for the container lifecycle.
+2. **Persistent Cloud Database (Optional for High-Volume Production)**: For permanent cross-deployment storage without cold-start resets, the system can connect to hosted databases like [Turso (libSQL/SQLite)](https://turso.tech), [Supabase](https://supabase.com), or [Neon](https://neon.tech). Simply set `DATABASE_URL` or `TURSO_DATABASE_URL` in your Vercel environment variables.
+
+---
+
+## 🔬 Scientific Methodology & Validation (99.3% Accuracy)
+* **Dataset**: ICAR & Kaggle benchmark agricultural dataset with 2,200 observation records across 22 crop classes (100 samples per class).
+* **Feature Vector (7 dimensions)**: Soil Nitrogen (N), Phosphorus (P), Potassium (K), Soil Reaction (pH), Ambient Temperature (°C), Relative Humidity (%), and Precipitation (mm).
+* **Validation Strategy**: Stratified 80/20 train/test split (1,760 train / 440 test samples) evaluated with 5-fold cross-validation.
+* **Algorithm**: Random Forest Classifier (100 decision trees) achieved **99.32% test accuracy** on unseen held-out validation samples.
+* **Per-Prediction Confidence**: Individual consultation scores represent posterior class probabilities (`predict_proba`) reflecting specific field uncertainty, which varies per input sample.
+
+---
+
+## ⚠️ Academic Disclaimer
+*This expert system is an academic demonstration developed at Medi-Caps University for research and educational purposes. All fertilizer prescriptions and soil amendments must be verified with an agricultural extension officer, Krishi Vigyan Kendra (KVK), or certified soil testing laboratory before field application.*
+
+---
+
 ## 👥 Project By
 * **Harsh Kumawat**
 * **Harshul Bhanwar**

@@ -417,26 +417,33 @@ class InferenceEngine:
             # 1. TIME BETWEEN TWO CROP HARVESTING (Duration Fit - Weight: 35%)
             d_min = req.get("duration_min_days", 90)
             d_max = req.get("duration_max_days", 120)
+            buffer = harvest_gap - d_max
+
+            if harvest_gap >= d_max:
+                fit_status = "Fits Safely"
+            elif harvest_gap >= d_min:
+                fit_status = "Tight Fit"
+            else:
+                fit_status = "Does Not Fit"
 
             if harvest_gap >= 300:
                 # Full season / No restriction
                 score += 35.0
                 reasons.append(f"Full season availability ({req['growth_duration_days']}).")
-            elif d_max <= harvest_gap:
+            elif fit_status == "Fits Safely":
                 # Perfect safe fit: Crop matures completely within harvest gap
                 score += 35.0
-                buffer = harvest_gap - d_max
                 reasons.append(f"Comfortably matures in {d_min}-{d_max} days, leaving a {buffer}-day safety buffer before your next scheduled planting.")
-            elif d_min <= harvest_gap < d_max:
-                # Tight window: Can be harvested early or under fast-maturing cultivars
+            elif fit_status == "Tight Fit":
+                # Tight window: Can be harvested early under fast-maturing cultivars
                 score += 24.0
-                reasons.append(f"Fits within your {harvest_gap}-day window using an early-maturing cultivar ({d_min} days).")
-            elif d_min > harvest_gap:
-                # Exceeds the harvest gap window
+                reasons.append(f"Tight fit: requires early-maturing cultivar ({d_min} days) to fit within your {harvest_gap}-day window (buffer: {buffer}d).")
+            else:
+                # Does not fit: Exceeds the harvest gap window
                 overdue = d_min - harvest_gap
                 score -= 40.0
-                warnings.append(f"Duration warning: Requires {d_min}-{d_max} days, exceeding your {harvest_gap}-day window by {overdue} days.")
-                if d_min > (harvest_gap * 1.4):
+                warnings.append(f"Does not fit: Requires {d_min}-{d_max} days, exceeding your {harvest_gap}-day window by at least {overdue} days (buffer: {buffer}d).")
+                if d_min > (harvest_gap * 1.3):
                     # Disqualify perennial or long season crops if gap is short
                     score -= 50.0
 
@@ -512,6 +519,8 @@ class InferenceEngine:
                 "duration_days": req.get("growth_duration_days", "N/A"),
                 "duration_min": d_min,
                 "duration_max": d_max,
+                "buffer_days": buffer,
+                "fit_status": fit_status,
                 "season": req.get("season", "All"),
                 "suitability_score": final_score,
                 "reasons": reasons,
@@ -534,20 +543,25 @@ class InferenceEngine:
         )
 
         # 1. Harvest Gap Explanation
+        buffer = harvest_gap - top_choice['duration_max']
+        fit_status = top_choice.get('fit_status', 'Fits Safely' if buffer >= 0 else 'Tight Fit')
         if harvest_gap >= 300:
             explanation_lines.append(
                 f"• **Time Window & Harvest Gap:** With a full season window ({harvest_gap} days), {top_choice['display_name']} ({top_choice['duration_days']}) achieves complete vegetative, flowering, and ripening stages without temporal pressure."
             )
+        elif fit_status == "Fits Safely":
+            explanation_lines.append(
+                f"• **Time Between Two Harvests (Fits Safely):** You have an available window of **{harvest_gap} days**. {top_choice['display_name']} matures in **{top_choice['duration_days']}**, leaving a comfortable **{buffer}-day safety margin** before your next primary crop planting."
+            )
+        elif fit_status == "Tight Fit":
+            explanation_lines.append(
+                f"• **Time Between Two Harvests (Tight Fit):** You have an available window of **{harvest_gap} days**. {top_choice['display_name']} requires {top_choice['duration_days']} (buffer: **{buffer} days**). It can fit only when utilizing early-maturing cultivars ({top_choice['duration_min']} days)."
+            )
         else:
-            buffer = harvest_gap - top_choice['duration_max']
-            if buffer >= 0:
-                explanation_lines.append(
-                    f"• **Time Between Two Harvests:** You have an available window of **{harvest_gap} days**. {top_choice['display_name']} matures in **{top_choice['duration_days']}**, leaving a comfortable **{buffer}-day safety margin** before your next primary crop planting."
-                )
-            else:
-                explanation_lines.append(
-                    f"• **Time Between Two Harvests:** Using an early-maturing cultivar ({top_choice['duration_min']} days), {top_choice['display_name']} fits inside your **{harvest_gap}-day window**."
-                )
+            deficit = top_choice['duration_min'] - harvest_gap
+            explanation_lines.append(
+                f"• **Time Between Two Harvests (Does Not Fit):** Available window of **{harvest_gap} days** is shorter than {top_choice['display_name']}'s minimum maturity duration of **{top_choice['duration_min']} days** (deficit: {deficit} days; buffer: **{buffer} days**)."
+            )
 
         # 2. Temperature & Season Explanation
         explanation_lines.append(

@@ -19,11 +19,21 @@ class TestAgriTechExpertSystem(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        import tempfile
         cls.kb = KnowledgeBase()
         cls.predictor = CropPredictor()
         cls.engine = InferenceEngine(cls.kb)
-        cls.db = DatabaseManager()
+        cls.test_db_file = tempfile.NamedTemporaryFile(suffix='.db', delete=False).name
+        cls.db = DatabaseManager(db_path=cls.test_db_file)
         cls.client = app.test_client()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            if hasattr(cls, 'test_db_file') and os.path.exists(cls.test_db_file):
+                os.remove(cls.test_db_file)
+        except Exception:
+            pass
 
     def test_01_knowledge_base_integrity(self):
         """Checks that all 22 crops, fertilizers, and rules exist in the KnowledgeBase."""
@@ -192,6 +202,7 @@ class TestAgriTechExpertSystem(unittest.TestCase):
 
         # Test report view for created consultation
         rec_id = data["consultation_id"]
+        self.assertTrue(str(rec_id).startswith("agr_"), f"Expected random token starting with 'agr_', got {rec_id}")
         res_report = self.client.get(f'/report/{rec_id}')
         self.assertEqual(res_report.status_code, 200)
         self.assertIn(b"Advisory Report", res_report.data)
@@ -200,6 +211,55 @@ class TestAgriTechExpertSystem(unittest.TestCase):
         res_csv = self.client.get('/api/history?format=csv')
         self.assertEqual(res_csv.status_code, 200)
         self.assertEqual(res_csv.mimetype, 'text/csv')
+
+    def test_08_fallow_gap_rice_validation(self):
+        """Fix List A2: Test that Rice with a 90-day gap shows 'Does Not Fit' and buffer is gap - max_duration."""
+        payload = {
+            "farmer_name": "Test Rice Grower",
+            "location": "Paddy Field #1",
+            "soil_type": "Clayey",
+            "N": 80,
+            "P": 40,
+            "K": 40,
+            "ph": 6.5,
+            "temperature": 24,
+            "humidity": 82,
+            "rainfall": 230,
+            "harvest_gap_days": 90,
+            "season_time": "Kharif (Monsoon: June - October)"
+        }
+        res = self.client.post('/api/predict', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertEqual(data["recommendation"]["crop"], "rice")
+        tc = data["recommendation"]["temporal_context"]
+        self.assertEqual(tc["harvest_gap_days"], 90)
+        self.assertEqual(tc["crop_duration_min"], 110)
+        self.assertEqual(tc["crop_duration_max"], 150)
+        self.assertEqual(tc["buffer_days"], -60)
+        self.assertEqual(tc["fit_status"], "Does Not Fit")
+
+    def test_09_admin_auth_and_anonymization(self):
+        """Fix List B1 & B2: Check that public records are anonymized and admin login unlocks full data."""
+        # Non-admin request
+        res_public = self.client.get('/history')
+        self.assertEqual(res_public.status_code, 200)
+        # Should show Admin Login button
+        self.assertIn(b"Admin Login", res_public.data)
+
+        # Admin login
+        login_res = self.client.post('/api/admin/login', data=json.dumps({"password": "agritech2026"}), content_type='application/json')
+        self.assertEqual(login_res.status_code, 200)
+        login_data = login_res.get_json()
+        self.assertEqual(login_data["status"], "success")
+
+        # Check admin access via session
+        with self.client.session_transaction() as sess:
+            sess['is_admin'] = True
+
+        res_admin = self.client.get('/history')
+        self.assertEqual(res_admin.status_code, 200)
+        self.assertIn(b"Admin Access Verified", res_admin.data)
 
 
 if __name__ == "__main__":

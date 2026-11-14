@@ -158,18 +158,18 @@
   <div class="container">
     <div class="report-paper">
 
-      <!-- Official Header -->
+      <!-- Demo Report Header -->
       <div class="report-header d-flex justify-content-between align-items-center">
         <div>
           <div class="d-flex align-items-center gap-2 mb-1">
             <img src="/static/assets/img/logo.png" alt="AgriCulture Logo" width="36" height="36" style="border-radius: 8px;">
             <span class="fs-3 fw-bold" style="font-family: 'Marcellus', serif; color: #1e451f;">AgriCulture</span>
           </div>
-          <div class="text-uppercase small fw-bold text-muted tracking-wider">AI Expert System • Precision Crop & Fertilizer Advisory</div>
+          <div class="text-uppercase small fw-bold text-muted tracking-wider">Demo AI Expert System • Precision Crop & Fertilizer Advisory</div>
         </div>
         <div class="text-end">
           <span class="badge bg-success-subtle text-success fs-6 border border-success px-3 py-2">
-            Advisory Report #{{ record.id }}
+            Demo Advisory Report #{{ record.report_id if record.report_id else record.id }}
           </span>
           <div class="small text-muted mt-1">Generated: {{ record.timestamp }}</div>
         </div>
@@ -301,9 +301,9 @@
         </p>
       </div>
 
-      <!-- Section 5: Verification & Signatures -->
+      <!-- Section 5: Academic Project Verification & Disclaimer -->
       <div class="row pt-4 mt-4 text-muted small signature-row">
-        <div class="col-6">
+        <div class="col-sm-6 mb-3 mb-sm-0">
           <div class="fw-bold text-dark mb-1">Project By:</div>
           <div class="text-dark">Harsh Kumawat</div>
           <div class="text-dark">Harshul Bhanwar</div>
@@ -311,12 +311,16 @@
           <div class="text-success fw-bold">Medi-Caps University</div>
           <div class="text-muted mt-2">Smart Crop & Fertilizer Advisor Expert System • AgriTech</div>
         </div>
-        <div class="col-6 text-end">
-          <div>Verified Field Agronomist / Examiner:</div>
-          <div class="mt-4 border-top d-inline-block pt-1" style="width: 200px;">
-            Authorized Signature
-          </div>
+        <div class="col-sm-6 text-sm-end">
+          <div class="fw-semibold text-dark">Academic Evaluation Note:</div>
+          <div class="small text-muted mt-1">Simulated agronomic advisory generated for coursework demonstration and machine learning validation.</div>
         </div>
+      </div>
+
+      <!-- Mandatory Academic Disclaimer Alert -->
+      <div class="alert alert-warning py-2 px-3 small border mt-4 mb-0 text-start" style="font-size: 11px; line-height: 1.5; background: #fffdf5; border-color: #fae1a0 !important;">
+        <strong><i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>Disclaimer:</strong>
+        Academic project demonstration for Medi-Caps University. Recommendations should be verified with an agricultural extension officer or certified soil testing laboratory.
       </div>
 
     </div>
