@@ -40,12 +40,13 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="/" class="active"><i class="bi bi-house-door me-1"></i> Home</a></li>
-          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> AI Soil & Crop Advisor</a></li>
-          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
-          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
-          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
-          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> Launch Advisor</a></li>
+          <li><a href="/" class="active"><i class="bi bi-house-door me-1"></i> <span data-i18n="nav_home">Home</span></a></li>
+          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> <span data-i18n="nav_advisor">AI Soil & Crop Advisor</span></a></li>
+          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> <span data-i18n="nav_rotation">Seasonal & Crop Rotation</span></a></li>
+          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> <span data-i18n="nav_knowledge">Knowledge Base</span></a></li>
+          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> <span data-i18n="nav_records">Consultation Records</span></a></li>
+          <li><button type="button" class="btn btn-sm btn-outline-success ms-lg-2 d-inline-flex align-items-center" onclick="toggleLanguage()" title="Switch Language / भाषा बदलें"><i class="bi bi-translate me-1"></i><span id="lang-label">हिन्दी</span></button></li>
+          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> <span data-i18n="nav_new_test">Launch Advisor</span></a></li>
         </ul>
       </nav>
 
@@ -505,6 +506,7 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/static/assets/js/main.js?v=2.2"></script>
+  <script src="/static/assets/js/i18n.js?v=2.2"></script>
 
   <script>
     // Live Hero Quick Soil Matcher: agronomic filtering by Soil, Rainfall & Temperature

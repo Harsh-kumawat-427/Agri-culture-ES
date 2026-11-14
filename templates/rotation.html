@@ -137,12 +137,13 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home</a></li>
-          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> AI Soil & Crop Advisor</a></li>
-          <li><a href="/rotation" class="active"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
-          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
-          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
-          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> Test Soil</a></li>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> <span data-i18n="nav_home">Home</span></a></li>
+          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> <span data-i18n="nav_advisor">AI Soil & Crop Advisor</span></a></li>
+          <li><a href="/rotation" class="active"><i class="bi bi-calendar2-range me-1"></i> <span data-i18n="nav_rotation">Seasonal & Crop Rotation</span></a></li>
+          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> <span data-i18n="nav_knowledge">Knowledge Base</span></a></li>
+          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> <span data-i18n="nav_records">Consultation Records</span></a></li>
+          <li><button type="button" class="btn btn-sm btn-outline-success ms-lg-2 d-inline-flex align-items-center" onclick="toggleLanguage()" title="Switch Language / भाषा बदलें"><i class="bi bi-translate me-1"></i><span id="lang-label">हिन्दी</span></button></li>
+          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> <span data-i18n="nav_new_test">Test Soil</span></a></li>
         </ul>
       </nav>
 
@@ -282,7 +283,7 @@
               </div>
 
               <!-- 5. Previous Crop (Rotation Synergy) -->
-              <div class="mb-4">
+              <div class="mb-3">
                 <label class="form-label">
                   <span><i class="bi bi-arrow-repeat text-success me-1"></i>Previous Harvested Crop (Preceding Crop)</span>
                 </label>
@@ -298,8 +299,34 @@
                 <small class="text-muted d-block mt-1">Helps the expert system calculate symbiotic nitrogen fixation and rotation benefits.</small>
               </div>
 
+              <!-- 6. Irrigation Availability & Water Source -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <span><i class="bi bi-droplet-half text-primary me-1"></i><span data-i18n="rot_irrigation_label">Irrigation Availability & Water Source</span></span>
+                </label>
+                <select class="form-select" id="rot_irrigation_type">
+                  <option value="Assured (Canal / Tube-well)" selected>Assured Irrigation (Canal / Borewell / Drip)</option>
+                  <option value="Rainfed / Limited Moisture">Rainfed / Limited Moisture (Rain-dependent)</option>
+                </select>
+                <small class="text-muted d-block mt-1">Water assurance penalizes water-intensive crops (Rice, Sugarcane) under rainfed regimes.</small>
+              </div>
+
+              <!-- 7. Pest & Disease History -->
+              <div class="mb-4">
+                <label class="form-label">
+                  <span><i class="bi bi-shield-slash text-danger me-1"></i><span data-i18n="rot_disease_label">Previous Crop Disease / Pest History</span></span>
+                </label>
+                <select class="form-select" id="rot_disease_history">
+                  <option value="None / Healthy Field" selected>None / Healthy Field (No major pest/disease incidence)</option>
+                  <option value="Soil-borne Fungal Wilt / Root Rot">Soil-borne Fungal Wilt / Root Rot (Fusarium / Rhizoctonia)</option>
+                  <option value="Nematode Infestation">Nematode Infestation (Root-knot Meloidogyne)</option>
+                  <option value="Stem Borer History">Stem Borer / Lepidopteran Infestation</option>
+                </select>
+                <small class="text-muted d-block mt-1">Breaks insect and fungal life cycles by selecting non-host crop families.</small>
+              </div>
+
               <button type="submit" class="btn btn-agri w-100 py-3" id="btn-rot-submit">
-                <i class="bi bi-magic me-2"></i> Recommend Optimal Crop & Rotation Plan
+                <i class="bi bi-magic me-2"></i> <span data-i18n="btn_rot_submit">Recommend Optimal Crop & Rotation Plan</span>
               </button>
             </form>
           </div>
@@ -538,28 +565,34 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/static/assets/js/main.js?v=2.2"></script>
+  <script src="/static/assets/js/i18n.js?v=2.2"></script>
 
   <script>
     const ROTATION_PRESETS = {
       summer_after_rice: {
         soil: "Loamy", ph: 6.5, time: "Zaid (Summer: March - June)",
-        temp: 30.0, gap: 75, prev: "Rice (Paddy)"
+        temp: 30.0, gap: 75, prev: "Rice (Paddy)",
+        irrigation: "Assured (Canal / Tube-well)", disease: "None / Healthy Field"
       },
       winter_after_maize: {
         soil: "Black", ph: 7.2, time: "Rabi (Winter: October - March)",
-        temp: 18.0, gap: 110, prev: "Maize (Corn)"
+        temp: 18.0, gap: 110, prev: "Maize (Corn)",
+        irrigation: "Assured (Canal / Tube-well)", disease: "None / Healthy Field"
       },
       cotton_rotation: {
         soil: "Black", ph: 7.0, time: "Kharif (Monsoon: June - October)",
-        temp: 26.0, gap: 160, prev: "Wheat"
+        temp: 26.0, gap: 160, prev: "Wheat",
+        irrigation: "Assured (Canal / Tube-well)", disease: "None / Healthy Field"
       },
       arid_catch: {
         soil: "Sandy", ph: 7.0, time: "Zaid (Summer: March - June)",
-        temp: 32.0, gap: 70, prev: "None / Fallow Field"
+        temp: 32.0, gap: 70, prev: "None / Fallow Field",
+        irrigation: "Rainfed / Limited Moisture", disease: "None / Healthy Field"
       },
       full_season: {
         soil: "Alluvial", ph: 6.5, time: "All Year / Any Season",
-        temp: 25.0, gap: 365, prev: "None / Fallow Field"
+        temp: 25.0, gap: 365, prev: "None / Fallow Field",
+        irrigation: "Assured (Canal / Tube-well)", disease: "None / Healthy Field"
       }
     };
 
@@ -599,6 +632,12 @@
       syncRotTemp(p.temp);
       syncRotGap(p.gap);
       document.getElementById('rot_prev_crop').value = p.prev;
+      if (p.irrigation && document.getElementById('rot_irrigation_type')) {
+        document.getElementById('rot_irrigation_type').value = p.irrigation;
+      }
+      if (p.disease && document.getElementById('rot_disease_history')) {
+        document.getElementById('rot_disease_history').value = p.disease;
+      }
     }
 
     async function runRotationInference(e) {
@@ -614,7 +653,9 @@
         time_of_year: document.getElementById('rot_time_of_year').value,
         temperature: parseFloat(document.getElementById('range_rot_temp').value),
         harvest_gap_days: parseInt(document.getElementById('range_rot_gap').value),
-        previous_crop: document.getElementById('rot_prev_crop').value
+        previous_crop: document.getElementById('rot_prev_crop').value,
+        irrigation_type: document.getElementById('rot_irrigation_type') ? document.getElementById('rot_irrigation_type').value : "Assured (Canal / Tube-well)",
+        disease_history: document.getElementById('rot_disease_history') ? document.getElementById('rot_disease_history').value : "None / Healthy Field"
       };
 
       try {

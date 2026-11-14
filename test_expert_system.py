@@ -261,6 +261,56 @@ class TestAgriTechExpertSystem(unittest.TestCase):
         self.assertEqual(res_admin.status_code, 200)
         self.assertIn(b"Admin Access Verified", res_admin.data)
 
+    def test_10_ml_transparency_api(self):
+        """Verifies ML model transparency endpoint with class-wise and macro metrics."""
+        res = self.client.get('/api/ml-transparency')
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertIn("dataset", data)
+        self.assertEqual(data["dataset"]["total_observations"], 2200)
+        self.assertIn("models_evaluated", data)
+        self.assertIn("class_wise_metrics", data)
+        self.assertIn("rice", data["class_wise_metrics"])
+        self.assertIn("maize", data["class_wise_metrics"])
+
+    def test_11_dosage_breakdown_and_starter_n(self):
+        """Verifies step-by-step dosage arithmetic and starter N credit for DAP."""
+        # Low P soil for chickpea (P=20 vs ideal 68 -> gap 48)
+        soil_low_p = SoilInput(N=40, P=20, K=80, ph=7.0, rainfall=80, temperature=20, humidity=20)
+        top_crops = self.predictor.top_n_crops(soil_low_p, n=3)
+        rec = self.engine.fire_rules(soil_low_p, "chickpea", top_crops)
+        report = rec.to_report()
+        self.assertIn("dosage_breakdown", report)
+        bd = report["dosage_breakdown"]
+        self.assertGreater(bd.get("starter_n_credit_kg_ha", 0), 0)
+        self.assertGreater(len(report.get("calculation_steps", [])), 0)
+
+    def test_12_rotation_with_irrigation_and_disease(self):
+        """Verifies rotation scoring with irrigation type and pest/disease disruption."""
+        result = self.engine.recommend_crop_rotation(
+            soil_condition="Loamy",
+            time_of_year="Kharif (Monsoon: June - October)",
+            temperature=26.0,
+            harvest_gap_days=120,
+            previous_crop="Rice (Paddy)",
+            ph=6.5,
+            irrigation_type="Rainfed / Limited Moisture",
+            disease_history="Soil-borne Fungal Wilt / Root Rot"
+        )
+        self.assertIsNotNone(result)
+        self.assertIn("primary_recommendation", result)
+        self.assertIn("top_alternatives", result)
+        self.assertIn("all_ranked", result)
+
+    def test_13_knowledge_rules_enrichment(self):
+        """Verifies that production rules have institutional sources and safety precautions."""
+        rules = self.kb.get_rules()
+        self.assertGreaterEqual(len(rules), 22)
+        r02 = next((r for r in rules if r.rule_id == "R02_N_LOW"), None)
+        self.assertIsNotNone(r02)
+        self.assertTrue(hasattr(r02, 'agronomic_source') and len(r02.agronomic_source) > 0)
+        self.assertTrue(hasattr(r02, 'safety_precaution') and len(r02.safety_precaution) > 0)
+
 
 if __name__ == "__main__":
     unittest.main()

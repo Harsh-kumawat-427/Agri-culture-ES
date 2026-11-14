@@ -56,12 +56,13 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home</a></li>
-          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> AI Soil & Crop Advisor</a></li>
-          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
-          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
-          <li><a href="/history" class="active"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
-          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> Test Soil</a></li>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> <span data-i18n="nav_home">Home</span></a></li>
+          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> <span data-i18n="nav_advisor">AI Soil & Crop Advisor</span></a></li>
+          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> <span data-i18n="nav_rotation">Seasonal & Crop Rotation</span></a></li>
+          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> <span data-i18n="nav_knowledge">Knowledge Base</span></a></li>
+          <li><a href="/history" class="active"><i class="bi bi-clock-history me-1"></i> <span data-i18n="nav_records">Consultation Records</span></a></li>
+          <li><button type="button" class="btn btn-sm btn-outline-success ms-lg-2 d-inline-flex align-items-center" onclick="toggleLanguage()" title="Switch Language / भाषा बदलें"><i class="bi bi-translate me-1"></i><span id="lang-label">हिन्दी</span></button></li>
+          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> <span data-i18n="nav_new_test">Test Soil</span></a></li>
         </ul>
       </nav>
 
@@ -172,13 +173,25 @@
       <!-- Action & Search Bar -->
       <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 14px;">
         <div class="row g-3 align-items-center justify-content-between">
-          <div class="col-md-5">
+          <div class="col-md-4">
             <div class="input-group">
               <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-              <input type="text" class="form-control border-start-0" id="historySearchInput" placeholder="Filter by farmer name, location, crop or fertilizer..." onkeyup="filterHistoryTable()">
+              <input type="text" class="form-control border-start-0" id="historySearchInput" placeholder="Filter by name, plot or fertilizer..." onkeyup="filterHistoryTable()">
             </div>
           </div>
-          <div class="col-md-7 text-md-end d-flex flex-wrap gap-2 justify-content-md-end align-items-center">
+          <div class="col-md-3">
+            <select class="form-select" id="cropFilterSelect" onchange="filterHistoryTable()">
+              <option value="" selected>All Predicted Crops</option>
+              {% set seen_crops = [] %}
+              {% for item in history %}
+                {% if item.predicted_crop and item.predicted_crop not in seen_crops %}
+                  {% set _ = seen_crops.append(item.predicted_crop) %}
+                  <option value="{{ item.predicted_crop|lower }}">{{ item.predicted_crop }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5 text-md-end d-flex flex-wrap gap-2 justify-content-md-end align-items-center">
             <button class="btn btn-agri-outline btn-sm" onclick="exportHistoryCSV()">
               <i class="bi bi-download me-1"></i>{% if is_admin %}Export Full CSV{% else %}Export Anonymized CSV{% endif %}
             </button>
@@ -363,6 +376,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/static/assets/js/main.js?v=2.2"></script>
+  <script src="/static/assets/js/i18n.js?v=2.2"></script>
 
   <script>
     let expModal = null;
@@ -379,10 +393,13 @@
 
     function filterHistoryTable() {
       const q = document.getElementById('historySearchInput').value.toLowerCase().trim();
+      const cropFilter = (document.getElementById('cropFilterSelect') ? document.getElementById('cropFilterSelect').value.toLowerCase().trim() : '');
       const rows = document.querySelectorAll('.history-row');
       rows.forEach(r => {
-        const text = r.getAttribute('data-search');
-        r.style.display = text.includes(q) ? '' : 'none';
+        const text = (r.getAttribute('data-search') || '').toLowerCase();
+        const matchesQuery = text.includes(q);
+        const matchesCrop = !cropFilter || text.includes(cropFilter);
+        r.style.display = (matchesQuery && matchesCrop) ? '' : 'none';
       });
     }
 

@@ -134,12 +134,13 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home</a></li>
-          <li><a href="/advisor" class="active"><i class="bi bi-cpu me-1"></i> AI Soil & Crop Advisor</a></li>
-          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
-          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
-          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
-          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> New Consultation</a></li>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> <span data-i18n="nav_home">Home</span></a></li>
+          <li><a href="/advisor" class="active"><i class="bi bi-cpu me-1"></i> <span data-i18n="nav_advisor">AI Soil & Crop Advisor</span></a></li>
+          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> <span data-i18n="nav_rotation">Seasonal & Crop Rotation</span></a></li>
+          <li><a href="/knowledge"><i class="bi bi-journal-bookmark me-1"></i> <span data-i18n="nav_knowledge">Knowledge Base</span></a></li>
+          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> <span data-i18n="nav_records">Consultation Records</span></a></li>
+          <li><button type="button" class="btn btn-sm btn-outline-success ms-lg-2 d-inline-flex align-items-center" onclick="toggleLanguage()" title="Switch Language / भाषा बदलें"><i class="bi bi-translate me-1"></i><span id="lang-label">हिन्दी</span></button></li>
+          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> <span data-i18n="nav_new_test">New Consultation</span></a></li>
         </ul>
       </nav>
 
@@ -206,29 +207,34 @@
         <!-- Input Form Column -->
         <div class="col-lg-6">
           <div class="expert-card">
-            <div class="card-header-styled">
-              <div class="card-header-icon"><i class="bi bi-clipboard2-data"></i></div>
-              <div>
-                <h4 class="mb-0 fs-5">Soil Testing & Weather Input Form</h4>
-                <small class="text-muted">Validated against agronomical feasibility bounds</small>
+            <div class="card-header-styled d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon"><i class="bi bi-clipboard2-data"></i></div>
+                <div>
+                  <h4 class="mb-0 fs-5" data-i18n="form_title">Soil Testing & Weather Input Form</h4>
+                  <small class="text-muted" data-i18n="form_subtitle">Validated against agronomical feasibility bounds</small>
+                </div>
               </div>
+              <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#soilHealthCardModal" title="Click to view benchmarks and autofill from Soil Health Card">
+                <i class="bi bi-card-checklist me-1"></i><span data-i18n="shc_guide_btn">Soil Health Card Guide</span>
+              </button>
             </div>
 
             <form id="advisor-form" onsubmit="runExpertSystem(event)">
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label">Farmer Name <span class="unit">(Optional)</span></label>
+                  <label class="form-label"><span data-i18n="farmer_name_label">Farmer Name</span> <span class="unit">(Optional)</span></label>
                   <input type="text" class="form-control" id="farmer_name" placeholder="e.g. Ramesh Kumar" value="Ramesh Kumar">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Farm Location / Plot <span class="unit">(Optional)</span></label>
+                  <label class="form-label"><span data-i18n="location_label">Farm Location / Plot</span> <span class="unit">(Optional)</span></label>
                   <input type="text" class="form-control" id="location" placeholder="e.g. Field #3, North Block" value="Plot #4 North Field">
                 </div>
               </div>
 
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label">Soil Classification</label>
+                  <label class="form-label" data-i18n="soil_type_label">Soil Classification</label>
                   <select class="form-select" id="soil_type">
                     <option value="Loamy" selected>Loamy Soil (Balanced drainage & moisture)</option>
                     <option value="Clayey">Clayey Soil (Heavy water retention)</option>
@@ -239,7 +245,7 @@
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Sowing Season / Time</label>
+                  <label class="form-label" data-i18n="season_label">Sowing Season / Time</label>
                   <select class="form-select" id="season_time">
                     <option value="Kharif (Monsoon: June - October)" selected>Kharif (Monsoon: June - October)</option>
                     <option value="Rabi (Winter: October - March)">Rabi (Winter: October - March)</option>
@@ -253,7 +259,7 @@
               <div class="row g-3 mb-4 p-3 rounded-3" style="background: #f7faf5; border: 1px dashed #cde0ca;">
                 <div class="col-md-6">
                   <label class="form-label fw-semibold text-success">
-                    <i class="bi bi-clock-history me-1"></i>Previous Crop Harvested
+                    <i class="bi bi-clock-history me-1"></i><span data-i18n="prev_crop_label">Previous Crop Harvested</span>
                   </label>
                   <select class="form-select" id="prev_crop">
                     <option value="None / First Planting" selected>None / First Planting</option>
@@ -265,8 +271,8 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-label fw-semibold text-success d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-hourglass-split me-1"></i>Gap Before Next Crop</span>
-                    <span class="unit"><strong id="val-harvest-gap" class="text-dark fs-6">160</strong> Days</span>
+                    <span><i class="bi bi-hourglass-split me-1"></i><span data-i18n="gap_label">Gap Before Next Crop</span></span>
+                    <span class="unit"><strong id="val-harvest-gap" class="text-dark fs-6">160</strong> <span data-i18n="days_unit">Days</span></span>
                   </div>
                   <div class="d-flex align-items-center gap-3">
                     <input type="range" class="form-range" id="range-harvest-gap" min="45" max="365" step="5" value="160" oninput="syncHarvestGap(this.value)">
@@ -277,13 +283,13 @@
               </div>
 
               <h6 class="fw-bold text-success mb-3 border-bottom pb-2">
-                <i class="bi bi-droplet-half me-1"></i>1. Primary Macronutrients (N-P-K in kg/ha)
+                <i class="bi bi-droplet-half me-1"></i><span data-i18n="macronutrients_title">1. Primary Macronutrients (N-P-K in kg/ha)</span>
               </h6>
 
               <!-- Nitrogen (N) -->
               <div class="mb-3">
                 <div class="form-label">
-                  <span>Nitrogen (N)</span>
+                  <span data-i18n="n_label">Nitrogen (N)</span>
                   <span class="unit"><strong id="val-N">40</strong> kg/ha</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -295,7 +301,7 @@
               <!-- Phosphorus (P) -->
               <div class="mb-3">
                 <div class="form-label">
-                  <span>Phosphorus (P)</span>
+                  <span data-i18n="p_label">Phosphorus (P)</span>
                   <span class="unit"><strong id="val-P">45</strong> kg/ha</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -307,7 +313,7 @@
               <!-- Potassium (K) -->
               <div class="mb-3">
                 <div class="form-label">
-                  <span>Potassium (K)</span>
+                  <span data-i18n="k_label">Potassium (K)</span>
                   <span class="unit"><strong id="val-K">40</strong> kg/ha</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -317,13 +323,13 @@
               </div>
 
               <h6 class="fw-bold text-success mb-3 mt-4 border-bottom pb-2">
-                <i class="bi bi-cloud-sun me-1"></i>2. Soil Reaction & Environmental Parameters
+                <i class="bi bi-cloud-sun me-1"></i><span data-i18n="env_title">2. Soil Reaction & Environmental Parameters</span>
               </h6>
 
               <!-- Soil pH -->
               <div class="mb-3">
                 <div class="form-label">
-                  <span>Soil Reaction (pH)</span>
+                  <span data-i18n="ph_label">Soil Reaction (pH)</span>
                   <span class="unit"><strong id="val-ph">6.5</strong> pH</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -335,7 +341,7 @@
               <!-- Temperature -->
               <div class="mb-3">
                 <div class="form-label">
-                  <span>Average Temperature (°C)</span>
+                  <span data-i18n="temp_label">Average Temperature (°C)</span>
                   <span class="unit"><strong id="val-temperature">24</strong> °C</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -347,7 +353,7 @@
               <!-- Humidity -->
               <div class="mb-3">
                 <div class="form-label">
-                  <span>Relative Humidity (%)</span>
+                  <span data-i18n="humidity_label">Relative Humidity (%)</span>
                   <span class="unit"><strong id="val-humidity">82</strong> %</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -359,7 +365,7 @@
               <!-- Rainfall -->
               <div class="mb-4">
                 <div class="form-label">
-                  <span>Rainfall (mm)</span>
+                  <span data-i18n="rainfall_label">Rainfall (mm)</span>
                   <span class="unit"><strong id="val-rainfall">230</strong> mm</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -369,7 +375,7 @@
               </div>
 
               <button type="submit" class="btn btn-agri w-100 py-3 fs-5" id="btn-submit">
-                <i class="bi bi-cpu me-2"></i>Run Expert Advisory Inference
+                <i class="bi bi-cpu me-2"></i><span data-i18n="btn_run_advisory">Run Expert Advisory Inference</span>
               </button>
             </form>
           </div>
@@ -427,22 +433,48 @@
             </div>
 
             <div class="p-4">
+              <!-- Uncertainty Warning Alert (Displayed when confidence is moderate or environmental factors approach extremes) -->
+              <div id="res-uncertainty-alert" class="alert alert-warning py-2 px-3 small border mb-3 rounded-3 d-none">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+                  <div>
+                    <strong>Agronomic Feasibility / Uncertainty Note:</strong>
+                    <span id="res-uncertainty-text"></span>
+                  </div>
+                </div>
+              </div>
+
               <!-- Fertilizer Dosage Box -->
               <div class="dosage-highlight-box mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="text-uppercase small fw-bold text-success">
-                    <i class="bi bi-droplet-half me-1"></i>Prescribed Fertilizer Strategy
+                    <i class="bi bi-droplet-half me-1"></i><span data-i18n="rec_fertilizer_title">Prescribed Fertilizer Strategy</span>
                   </span>
                   <span class="badge bg-success-subtle text-success border border-success" id="res-fertilizer-name">Urea</span>
                 </div>
                 <div class="dosage-val" id="res-dosage-val">87.0 kg/ha</div>
                 <div class="small text-muted" id="res-dosage-acre">≈ 35.2 kg per acre</div>
+                <div id="res-active-grade" class="small fw-semibold text-success-emphasis mt-2"></div>
+                <div id="res-starter-n-box" class="small text-primary mt-1 d-none">
+                  <i class="bi bi-info-circle-fill me-1"></i><span id="res-starter-n-text"></span>
+                </div>
+              </div>
+
+              <!-- Step-by-Step Dosage Formulation Arithmetic Box -->
+              <div id="res-calculation-steps-box" class="p-3 mb-4 rounded-3 border bg-light d-none">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                  <span class="fw-bold text-dark small"><i class="bi bi-calculator me-1 text-success"></i><span data-i18n="calculation_steps_title">Step-by-Step Dosage Formulation Arithmetic:</span></span>
+                  <span class="badge bg-white text-secondary border font-monospace" style="font-size: 11px;">ICAR Scientific Method</span>
+                </div>
+                <ol id="res-calculation-steps" class="mb-0 ps-3 small text-muted lh-lg">
+                  <!-- Dynamically populated -->
+                </ol>
               </div>
 
               <!-- Temporal Context: Growth Duration & Harvest Interval Fit -->
               <div class="p-3 mb-4 rounded-3 border bg-light">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                  <span class="fw-bold text-dark small"><i class="bi bi-calendar-check me-1 text-success"></i>Cropping Cycle & Fallow Gap Compatibility</span>
+                  <span class="fw-bold text-dark small"><i class="bi bi-calendar-check me-1 text-success"></i><span data-i18n="field_fallow_status">Cropping Cycle & Fallow Gap Compatibility</span></span>
                   <span class="badge bg-success" id="res-gap-status">Fits Safely (+10d buffer)</span>
                 </div>
                 <div class="row g-2 small">
@@ -465,10 +497,20 @@
                 </div>
               </div>
 
+              <!-- Top-3 ML Candidate Crops -->
+              <div id="res-top-candidates-container" class="mb-4">
+                <h6 class="fw-bold text-dark mb-2">
+                  <i class="bi bi-bar-chart-steps text-success me-1"></i><span data-i18n="runner_up_title">Alternative Crop Candidates Evaluated by ML:</span>
+                </h6>
+                <div id="res-top-candidates" class="row g-2">
+                  <!-- Dynamically populated candidate cards with match % and progress bars -->
+                </div>
+              </div>
+
               <!-- Fired Expert Rules Breakdown -->
               <div class="mb-4">
                 <h6 class="fw-bold text-dark mb-2">
-                  <i class="bi bi-funnel text-success me-1"></i>Active Production Rules Applied:
+                  <i class="bi bi-funnel text-success me-1"></i><span data-i18n="rules_fired_title">Active Production Rules Applied:</span>
                 </h6>
                 <div id="res-fired-rules" class="d-flex flex-wrap gap-2">
                   <!-- Dynamically populated tags -->
@@ -479,7 +521,7 @@
               <div class="explanation-facility-box mb-4">
                 <div class="d-flex align-items-center gap-2 mb-2">
                   <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
-                  <h6 class="mb-0 fw-bold text-success">Explanation Facility Reasoning:</h6>
+                  <h6 class="mb-0 fw-bold text-success" data-i18n="reasoning_title">Explanation Facility Reasoning:</h6>
                 </div>
                 <p id="res-explanation-text" class="text-dark small mb-0 lh-lg" style="white-space: pre-line;">
                   Analyzing parameters...
@@ -499,7 +541,7 @@
               <!-- Agronomic Action Tips -->
               <div class="mb-4">
                 <h6 class="fw-bold text-dark mb-2">
-                  <i class="bi bi-check2-all text-success me-1"></i>Field Management Recommendations:
+                  <i class="bi bi-check2-all text-success me-1"></i><span data-i18n="field_tips_title">Field Management Recommendations:</span>
                 </h6>
                 <ul id="res-tips-list" class="list-unstyled mb-0">
                   <!-- Dynamically populated -->
@@ -509,9 +551,13 @@
               <!-- Action Buttons -->
               <div class="d-flex gap-2 mt-4 pt-3 border-top flex-wrap">
                 <button onclick="printReportDocument()" class="btn btn-outline-success flex-fill py-2">
-                  <i class="bi bi-printer me-1"></i>Print Demo Report
+                  <i class="bi bi-printer me-1"></i><span data-i18n="btn_print_report">Print Demo Report</span>
                 </button>
                 <a id="btn-view-report" href="/report/demo" target="_blank" class="btn btn-agri flex-fill text-white py-2">
+                  <i class="bi bi-file-earmark-text me-1"></i><span data-i18n="btn_view_report">View Advisory Report</span>
+                </a>
+              </div>
+            </div>
                   <i class="bi bi-file-earmark-text me-1"></i>View Advisory Report
                 </a>
               </div>
@@ -548,6 +594,7 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/static/assets/js/main.js?v=2.2"></script>
+  <script src="/static/assets/js/i18n.js?v=2.2"></script>
 
   <script>
     let chartInstance = null;
@@ -639,6 +686,42 @@
       }
     }
 
+    function applyShcSample(type) {
+      if (type === 'low') {
+        syncInput('N', 30); syncRange('N', 30);
+        syncInput('P', 20); syncRange('P', 20);
+        syncInput('K', 25); syncRange('K', 25);
+        syncInput('ph', 5.8); syncRange('ph', 5.8);
+        syncInput('temperature', 25); syncRange('temperature', 25);
+        syncInput('humidity', 70); syncRange('humidity', 70);
+        syncInput('rainfall', 95); syncRange('rainfall', 95);
+        document.getElementById('soil_type').value = 'Loamy';
+      } else if (type === 'balanced') {
+        syncInput('N', 80); syncRange('N', 80);
+        syncInput('P', 45); syncRange('P', 45);
+        syncInput('K', 40); syncRange('K', 40);
+        syncInput('ph', 6.8); syncRange('ph', 6.8);
+        syncInput('temperature', 24); syncRange('temperature', 24);
+        syncInput('humidity', 75); syncRange('humidity', 75);
+        syncInput('rainfall', 120); syncRange('rainfall', 120);
+        document.getElementById('soil_type').value = 'Alluvial';
+      } else if (type === 'sodic') {
+        syncInput('N', 45); syncRange('N', 45);
+        syncInput('P', 30); syncRange('P', 30);
+        syncInput('K', 35); syncRange('K', 35);
+        syncInput('ph', 8.6); syncRange('ph', 8.6);
+        syncInput('temperature', 28); syncRange('temperature', 28);
+        syncInput('humidity', 60); syncRange('humidity', 60);
+        syncInput('rainfall', 80); syncRange('rainfall', 80);
+        document.getElementById('soil_type').value = 'Clayey';
+      }
+      const modalEl = document.getElementById('soilHealthCardModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+      }
+    }
+
     function renderResults(data) {
       document.getElementById('results-placeholder').classList.add('d-none');
       const disp = document.getElementById('results-display');
@@ -662,11 +745,74 @@
         tsEl.innerText = 'Generated: ' + new Date().toLocaleString();
       }
 
+      // Uncertainty Alert
+      const alertBox = document.getElementById('res-uncertainty-alert');
+      const alertText = document.getElementById('res-uncertainty-text');
+      if (rec.uncertainty_warning && alertBox && alertText) {
+        alertText.innerText = rec.uncertainty_warning;
+        alertBox.classList.remove('d-none');
+      } else if (alertBox) {
+        alertBox.classList.add('d-none');
+      }
+
       document.getElementById('res-crop-name').innerText = rec.crop_display || rec.crop;
       document.getElementById('res-confidence').innerText = data.confidence + "% Match";
       document.getElementById('res-fertilizer-name').innerText = rec.recommended_fertilizer;
       document.getElementById('res-dosage-val').innerText = rec.dosage.kg_per_hectare + " kg/ha";
       document.getElementById('res-dosage-acre').innerText = "≈ " + rec.dosage.kg_per_acre + " kg per acre";
+
+      // Dosage breakdown & starter N credit
+      const bd = rec.dosage_breakdown || {};
+      const activeGradeEl = document.getElementById('res-active-grade');
+      if (activeGradeEl) {
+        activeGradeEl.innerText = bd.active_grade ? ('Formulation Grade: ' + bd.active_grade) : '';
+      }
+
+      const starterBox = document.getElementById('res-starter-n-box');
+      const starterText = document.getElementById('res-starter-n-text');
+      if (bd.starter_n_credit_kg_ha && bd.starter_n_credit_kg_ha > 0 && starterBox && starterText) {
+        starterText.innerText = `Starter Nitrogen Credit: DAP dose provides ${bd.starter_n_credit_kg_ha} kg/ha N (credited against crop requirement).`;
+        starterBox.classList.remove('d-none');
+      } else if (starterBox) {
+        starterBox.classList.add('d-none');
+      }
+
+      // Step-by-Step Calculation Steps
+      const calcBox = document.getElementById('res-calculation-steps-box');
+      const calcList = document.getElementById('res-calculation-steps');
+      const steps = rec.calculation_steps || bd.calculation_steps || [];
+      if (steps.length > 0 && calcBox && calcList) {
+        calcList.innerHTML = '';
+        steps.forEach(st => {
+          const li = document.createElement('li');
+          li.innerText = st;
+          calcList.appendChild(li);
+        });
+        calcBox.classList.remove('d-none');
+      } else if (calcBox) {
+        calcBox.classList.add('d-none');
+      }
+
+      // Top 3 Alternative Candidates
+      const topContainer = document.getElementById('res-top-candidates');
+      if (topContainer) {
+        topContainer.innerHTML = '';
+        const cands = data.top_candidates || rec.top_candidates || [];
+        cands.forEach(c => {
+          const col = document.createElement('div');
+          col.className = 'col-4';
+          col.innerHTML = `
+            <div class="p-2 bg-light rounded border text-center h-100">
+              <div class="fw-bold text-dark small text-truncate" title="${c.crop}">${c.crop}</div>
+              <div class="small text-success fw-bold mt-1">${c.confidence.toFixed(1)}%</div>
+              <div class="progress mt-1" style="height: 4px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: ${Math.min(100, Math.max(5, c.confidence))}%"></div>
+              </div>
+            </div>
+          `;
+          topContainer.appendChild(col);
+        });
+      }
 
       const tc = rec.temporal_context || {};
       const ib = rec.ideal_benchmarks || {};
@@ -703,7 +849,9 @@
         rec.fired_rules.forEach(r => {
           const badge = document.createElement('span');
           badge.className = 'rule-tag';
-          badge.innerHTML = `<i class="bi bi-check2-circle text-success"></i> <strong>${r.rule_id}</strong>: ${r.suggested_fertilizer}`;
+          const srcShort = r.source ? ` [${r.source.split(' - ')[0] || 'ICAR'}]` : '';
+          badge.innerHTML = `<i class="bi bi-check2-circle text-success"></i> <strong>${r.rule_id}</strong>: ${r.suggested_fertilizer} <small class="text-muted">${srcShort}</small>`;
+          badge.title = `${r.rule_name || r.rule_id}\nInstitutional Source: ${r.source || 'ICAR'}${r.safety ? '\nSafety Precaution: ' + r.safety : ''}`;
           rulesContainer.appendChild(badge);
         });
       } else {
@@ -854,6 +1002,107 @@
             <strong><i class="bi bi-info-circle-fill me-1"></i>Distinction Between Overall Accuracy and Per-Prediction Confidence:</strong><br>
             • <strong>99.3% Validation Accuracy:</strong> Measures the global performance of the Random Forest model on the 440 held-out test records.<br>
             • <strong>Per-Prediction Confidence Score:</strong> Represents the posterior probability distribution output by <code>predict_proba()</code> for that specific soil and weather vector. Unlike the static 99.3% test metric, per-prediction scores reflect sample-specific certainty (e.g. 84%, 96%) when climate parameters overlap multiple crop ranges.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Soil Health Card (SHC) Interpretation Guide & Autofill Modal -->
+  <div class="modal fade" id="soilHealthCardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-card-checklist me-2"></i>Soil Health Card (SHC) Interpretation & Benchmark Guide</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="p-3 bg-light rounded-3 border-start border-4 border-success mb-3">
+            <h6 class="fw-bold mb-1">Government of India — Soil Health Card Scheme Standard Benchmarks</h6>
+            <div class="small text-muted">Ministry of Agriculture & Farmers Welfare nutrient classification and standard lab testing ranges.</div>
+          </div>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered table-sm text-center align-middle">
+              <thead class="table-light small">
+                <tr>
+                  <th>Nutrient / Parameter</th>
+                  <th>Unit</th>
+                  <th class="table-danger">Low (Deficient)</th>
+                  <th class="table-success">Medium (Optimal)</th>
+                  <th class="table-warning">High (Excess)</th>
+                  <th>Agronomic Action</th>
+                </tr>
+              </thead>
+              <tbody class="small">
+                <tr>
+                  <td class="fw-bold text-start">Available Nitrogen (N)</td>
+                  <td>kg/ha</td>
+                  <td>&lt; 280 (or &lt; 50)</td>
+                  <td>280 – 560 (50 – 100)</td>
+                  <td>&gt; 560 (&gt; 100)</td>
+                  <td class="text-start">Split Urea / DAP basal application</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start">Available Phosphorus (P₂O₅)</td>
+                  <td>kg/ha</td>
+                  <td>&lt; 23 (or &lt; 30)</td>
+                  <td>23 – 57 (30 – 60)</td>
+                  <td>&gt; 57 (&gt; 60)</td>
+                  <td class="text-start">Apply DAP / Single Super Phosphate (SSP)</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start">Available Potassium (K₂O)</td>
+                  <td>kg/ha</td>
+                  <td>&lt; 133 (or &lt; 30)</td>
+                  <td>133 – 336 (30 – 60)</td>
+                  <td>&gt; 336 (&gt; 60)</td>
+                  <td class="text-start">Apply Muriate of Potash (MOP 0-0-60)</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start">Soil Reaction (pH)</td>
+                  <td>pH</td>
+                  <td>&lt; 6.5 (Acidic)</td>
+                  <td>6.5 – 7.5 (Neutral)</td>
+                  <td>&gt; 7.5 (Alkaline / Sodic)</td>
+                  <td class="text-start">Lime (CaCO₃) if &lt; 6.0; Gypsum (CaSO₄) if &gt; 8.0</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start">Organic Carbon (OC)</td>
+                  <td>%</td>
+                  <td>&lt; 0.50%</td>
+                  <td>0.50% – 0.75%</td>
+                  <td>&gt; 0.75%</td>
+                  <td class="text-start">Farmyard Manure (FYM) @ 5-10 t/ha</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start">Electrical Conductivity (EC)</td>
+                  <td>dS/m</td>
+                  <td>&lt; 1.0 (Normal)</td>
+                  <td>1.0 – 2.0 (Critical)</td>
+                  <td>&gt; 2.0 (Saline)</td>
+                  <td class="text-start">Subsurface drainage leaching with freshwater</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card p-3 bg-light border-0 rounded-3 mb-0">
+            <div class="fw-bold text-dark small mb-2"><i class="bi bi-magic text-warning me-1"></i>One-Click Autofill Form from Sample Soil Health Cards:</div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-danger btn-sm" onclick="applyShcSample('low')">
+                <i class="bi bi-arrow-down-circle me-1"></i>Low Fertility Soil Card (N: 30, P: 20, K: 25)
+              </button>
+              <button type="button" class="btn btn-outline-success btn-sm" onclick="applyShcSample('balanced')">
+                <i class="bi bi-check-circle me-1"></i>Balanced Fertility Card (N: 80, P: 45, K: 40)
+              </button>
+              <button type="button" class="btn btn-outline-warning btn-sm" onclick="applyShcSample('sodic')">
+                <i class="bi bi-exclamation-triangle me-1"></i>Sodic / High-pH Card (pH: 8.6, Gypsum Needed)
+              </button>
+            </div>
           </div>
         </div>
         <div class="modal-footer">

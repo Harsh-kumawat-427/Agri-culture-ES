@@ -28,7 +28,9 @@ class Recommendation:
         nutrient_gaps: Dict[str, float],
         ideal_benchmarks: Dict[str, Any],
         top_crops: List[Dict[str, Any]],
-        agronomic_tips: List[str]
+        agronomic_tips: List[str],
+        dosage_breakdown: Optional[Dict[str, Any]] = None,
+        calculation_steps: Optional[List[str]] = None
     ):
         self.crop = crop
         self.display_name = display_name
@@ -41,6 +43,8 @@ class Recommendation:
         self.ideal_benchmarks = ideal_benchmarks
         self.top_crops = top_crops
         self.agronomic_tips = agronomic_tips
+        self.dosage_breakdown = dosage_breakdown or {}
+        self.calculation_steps = calculation_steps or []
 
     def to_report(self) -> Dict[str, Any]:
         """Serializes recommendation into a clean dictionary report."""
@@ -53,6 +57,8 @@ class Recommendation:
                 "kg_per_acre": self.dosage_kg_acre,
                 "unit_summary": f"{self.dosage_kg_ha} kg/ha ({self.dosage_kg_acre} kg/acre)" if self.dosage_kg_ha > 0 else "None required"
             },
+            "dosage_breakdown": self.dosage_breakdown,
+            "calculation_steps": self.calculation_steps,
             "explanation": self.explanation,
             "nutrient_gaps": self.nutrient_gaps,
             "ideal_benchmarks": self.ideal_benchmarks,
@@ -260,9 +266,12 @@ class InferenceEngine:
         for r in matched_rules:
             fired_details.append({
                 "rule_id": r.rule_id,
+                "rule_name": getattr(r, "rule_name", r.rule_id),
                 "condition": r.condition_desc,
                 "suggested_fertilizer": r.suggested_fertilizer,
-                "advice": r.advice
+                "advice": r.advice,
+                "source": getattr(r, "agronomic_source", "ICAR / State Agricultural Universities"),
+                "safety": getattr(r, "safety_precaution", "")
             })
             tips.append(r.advice)
 
@@ -276,52 +285,151 @@ class InferenceEngine:
         chem_matches = [r for r in matched_rules if r.rule_id in chem_rule_order]
         primary_rule = chem_matches[0] if chem_matches else (matched_rules[0] if matched_rules else None)
 
+        active_grade = ""
+        formula_applied = ""
+        starter_n_credit = 0.0
+        split_schedule = "Apply in split doses according to crop phenological growth stages."
+        calc_steps = []
+
         if primary_rule:
             if primary_rule.rule_id == "R01_ALL_DEFICIENT":
                 primary_fertilizer = "NPK 19:19:19"
                 max_gap = max(gap_n, gap_p, gap_k)
                 dosage_ha = self.advisor.compute_dosage(max_gap, primary_fertilizer)
+                active_grade = "Complex 19:19:19 (19% N, 19% P₂O₅, 19% K₂O)"
+                formula_applied = f"Dose (kg/ha) = Max Deficit ({max_gap} kg/ha) ÷ 0.19 = {dosage_ha} kg/ha"
+                calc_steps = [
+                    f"1. Soil Multi-Nutrient Deficits: N gap = {gap_n} kg/ha, P gap = {gap_p} kg/ha, K gap = {gap_k} kg/ha.",
+                    "2. Active Product Grade: Complex 19:19:19 contains 19% each of N, P₂O₅, and K₂O.",
+                    f"3. Balanced Formulation: {max_gap} ÷ 0.19 = {dosage_ha} kg/ha (≈ {dosage_ha * 0.404686:.1f} kg/acre) applied as basal dressing."
+                ]
             elif primary_rule.rule_id == "R08_NP_DEFICIENT":
                 primary_fertilizer = "DAP (18-46-0) + Topdress Urea"
                 max_gap = max(gap_n, gap_p)
-                dosage_ha = self.advisor.compute_dosage(max_gap, "DAP")
+                dosage_ha = self.advisor.compute_dosage(gap_p if gap_p > 0 else max_gap, "DAP")
+                starter_n_credit = round(dosage_ha * 0.18, 2)
+                active_grade = "DAP 18-46-0 (46% P₂O₅, 18% N)"
+                formula_applied = f"Basal DAP Dose = P Deficit ({gap_p} kg/ha) ÷ 0.46 = {dosage_ha} kg/ha"
+                calc_steps = [
+                    f"1. Soil P Deficit: {gap_p} kg/ha P₂O₅ required for root establishment.",
+                    "2. Product Active Fraction: DAP supplies 46% P₂O₅ plus 18% starter Nitrogen.",
+                    f"3. Calculated DAP Dose: {gap_p} ÷ 0.46 = {dosage_ha} kg/ha (≈ {dosage_ha * 0.404686:.1f} kg/acre).",
+                    f"4. Starter N Credit: This DAP dose supplies {starter_n_credit} kg/ha Nitrogen; deduct from topdress Urea requirement."
+                ]
             elif primary_rule.rule_id == "R09_NK_DEFICIENT":
                 primary_fertilizer = "Potassium Nitrate (13-0-45) or Urea + MOP blend"
                 max_gap = max(gap_n, gap_k)
-                dosage_ha = self.advisor.compute_dosage(max_gap, "Urea")
+                dosage_ha = self.advisor.compute_dosage(gap_n, "Urea")
+                active_grade = "Urea (46% N) + MOP (60% K₂O)"
+                formula_applied = f"Urea Dose = N Deficit ({gap_n} kg/ha) ÷ 0.46 = {dosage_ha} kg/ha"
+                calc_steps = [
+                    f"1. Nitrogen Deficit: {gap_n} kg/ha; Potassium Deficit: {gap_k} kg/ha.",
+                    f"2. Urea Formulation: {gap_n} ÷ 0.46 = {dosage_ha} kg/ha Urea.",
+                    f"3. MOP Formulation: {gap_k} ÷ 0.60 = {gap_k / 0.60:.1f} kg/ha MOP applied to prevent stem lodging."
+                ]
             elif primary_rule.rule_id == "R10_PK_DEFICIENT":
                 primary_fertilizer = "Monopotassium Phosphate (MKP 00:52:34) / SSP + MOP"
                 max_gap = max(gap_p, gap_k)
-                dosage_ha = self.advisor.compute_dosage(max_gap, "DAP")
+                dosage_ha = self.advisor.compute_dosage(gap_p, "DAP")
+                active_grade = "SSP (16% P₂O₅, 11% S) + MOP (60% K₂O)"
+                formula_applied = f"Phosphate Dose = P Deficit ({gap_p} kg/ha) ÷ 0.46 = {dosage_ha} kg/ha"
+                calc_steps = [
+                    f"1. P Deficit: {gap_p} kg/ha P₂O₅; K Deficit: {gap_k} kg/ha K₂O.",
+                    f"2. Primary Phosphatic Dose: {dosage_ha} kg/ha DAP or {gap_p / 0.16:.1f} kg/ha SSP.",
+                    f"3. Potassic Reinforcement: {gap_k / 0.60:.1f} kg/ha MOP applied prior to flowering."
+                ]
             elif primary_rule.rule_id == "R02_N_LOW":
                 primary_fertilizer = "Urea"
                 dosage_ha = self.advisor.compute_dosage(gap_n, primary_fertilizer)
+                active_grade = "Prilled Urea (46% N)"
+                formula_applied = f"Dose (kg/ha) = N Deficit ({gap_n} kg/ha) ÷ 0.46 = {dosage_ha} kg/ha"
+                split_schedule = "Apply 50% basal at sowing, 25% at tillering (3-4 weeks), and 25% at panicle initiation."
+                calc_steps = [
+                    f"1. Soil Nitrogen Deficit: Crop Target ({reqs['ideal_N']} kg/ha) - Soil Test ({soil.N} kg/ha) = {gap_n} kg/ha N required.",
+                    "2. Active Product Grade: Commercial Urea contains 46% elemental Nitrogen (0.46 kg N per 1 kg Urea).",
+                    f"3. Gross Quantity Formulation: {gap_n} ÷ 0.46 = {dosage_ha} kg/ha (≈ {dosage_ha * 0.404686:.1f} kg/acre).",
+                    "4. Split Application Schedule: 50% basal at final land preparation, 25% at tillering, 25% at panicle initiation."
+                ]
             elif primary_rule.rule_id == "R03_P_LOW":
                 primary_fertilizer = "DAP"
                 dosage_ha = self.advisor.compute_dosage(gap_p, primary_fertilizer)
+                starter_n_credit = round(dosage_ha * 0.18, 2)
+                active_grade = "DAP 18-46-0 (46% P₂O₅, 18% N)"
+                formula_applied = f"Dose (kg/ha) = P Deficit ({gap_p} kg/ha) ÷ 0.46 = {dosage_ha} kg/ha"
+                split_schedule = "Apply 100% as basal dressing placed 3-5 cm below seed depth during sowing."
+                calc_steps = [
+                    f"1. Soil Phosphorus Deficit: Crop Target ({reqs['ideal_P']} kg/ha P₂O₅) - Soil Test ({soil.P} kg/ha) = {gap_p} kg/ha required.",
+                    "2. Commercial Fertilizer Grade: DAP provides 46% P₂O₅ (20.1% elemental P) + 18% starter Nitrogen.",
+                    f"3. Gross Quantity Formulation: {gap_p} ÷ 0.46 = {dosage_ha} kg/ha (≈ {dosage_ha * 0.404686:.1f} kg/acre).",
+                    f"4. Starter N Credit: This DAP application additionally contributes {starter_n_credit} kg/ha Nitrogen to the crop."
+                ]
             elif primary_rule.rule_id == "R04_K_LOW":
                 primary_fertilizer = "MOP (Muriate of Potash)"
                 dosage_ha = self.advisor.compute_dosage(gap_k, "MOP")
+                active_grade = "MOP 0-0-60 (60% K₂O)"
+                formula_applied = f"Dose (kg/ha) = K Deficit ({gap_k} kg/ha) ÷ 0.60 = {dosage_ha} kg/ha"
+                split_schedule = "Apply 100% basal in heavy soils, or split 50% basal + 50% flowering in sandy soils."
+                calc_steps = [
+                    f"1. Soil Potassium Deficit: Crop Target ({reqs['ideal_K']} kg/ha K₂O) - Soil Test ({soil.K} kg/ha) = {gap_k} kg/ha required.",
+                    "2. Commercial Fertilizer Grade: MOP provides 60% K₂O (equivalent to 49.8% elemental K).",
+                    f"3. Gross Quantity Formulation: {gap_k} ÷ 0.60 = {dosage_ha} kg/ha (≈ {dosage_ha * 0.404686:.1f} kg/acre)."
+                ]
             elif primary_rule.rule_id == "R05_PH_ACIDIC":
                 primary_fertilizer = "Agricultural Lime (CaCO3)"
                 dosage_ha = 300.0
+                active_grade = "Agricultural Lime (CaCO₃: 90% purity)"
+                formula_applied = "Standard lime broadcast: 300 kg/ha for acidic soil (pH < 5.5)"
+                calc_steps = [
+                    f"1. Soil Reaction: Current pH {soil.ph:.1f} is acidic (below 5.5).",
+                    "2. Objective: Neutralize toxic Al³⁺ and Fe²⁺ ions to restore phosphorus availability.",
+                    f"3. Prescribed Amendment: {dosage_ha} kg/ha Agricultural Lime incorporated 2-3 weeks before sowing."
+                ]
             elif primary_rule.rule_id == "R06_PH_ALKALINE":
                 primary_fertilizer = "Agricultural Gypsum"
                 dosage_ha = 250.0
+                active_grade = "Agricultural Gypsum (CaSO₄·2H₂O: 18% S, 23% Ca)"
+                formula_applied = "Standard gypsum broadcast: 250 kg/ha for sodic soil (pH > 8.0)"
+                calc_steps = [
+                    f"1. Soil Reaction: Current pH {soil.ph:.1f} indicates alkaline/sodic conditions with excess exchangeable sodium.",
+                    "2. Objective: Displace toxic Na⁺ ions with soluble Ca²⁺ from gypsum, followed by leaching.",
+                    f"3. Prescribed Amendment: {dosage_ha} kg/ha Agricultural Gypsum incorporated into upper 10 cm, followed by heavy flushing."
+                ]
             elif primary_rule.rule_id == "R11_N_EXCESS":
                 primary_fertilizer = "Withhold Nitrogen Fertilizers / Leach with Water"
                 dosage_ha = 0.0
+                active_grade = "Zero Nitrogen Application"
+                calc_steps = ["1. Luxury Nitrogen: Soil Nitrogen exceeds crop safety threshold. Withhold all nitrogenous fertilizers."]
             elif primary_rule.rule_id == "R12_P_EXCESS":
                 primary_fertilizer = "Chelated Zinc (Zn-EDTA) Foliar Spray"
                 dosage_ha = 15.0
+                active_grade = "Zn-EDTA (12% Zn Chelated)"
+                formula_applied = "Foliar spray: 15 kg/ha equivalent or 1 g/L water foliar spray"
+                calc_steps = ["1. P-Zn Antagonism: High phosphorus blocks zinc uptake. Apply foliar Zn-EDTA to overcome lockout."]
             elif primary_rule.rule_id == "R07_BALANCED_SOIL":
                 primary_fertilizer = "None (Soil is Nutritiously Balanced)"
                 dosage_ha = 0.0
+                active_grade = "Balanced Soil"
+                calc_steps = ["1. Soil Test Evaluation: Primary nutrients (N, P, K) meet crop requirements. Maintain with organic FYM."]
             else:
                 primary_fertilizer = primary_rule.suggested_fertilizer
                 dosage_ha = 25.0
+                active_grade = "Agronomic Amendment"
 
         dosage_acre = dosage_ha * 0.404686
+
+        dosage_breakdown = {
+            "target_fertilizer": primary_fertilizer,
+            "soil_test_values": {"N": soil.N, "P": soil.P, "K": soil.K, "pH": soil.ph},
+            "crop_ideal_benchmarks": {"ideal_N": reqs["ideal_N"], "ideal_P": reqs["ideal_P"], "ideal_K": reqs["ideal_K"], "ideal_pH": reqs["ideal_ph"]},
+            "nutrient_deficits": {"N_deficit": gap_n, "P_deficit": gap_p, "K_deficit": gap_k, "pH_diff": gap_ph},
+            "active_grade": active_grade,
+            "formula_applied": formula_applied,
+            "gross_dose_kg_ha": dosage_ha,
+            "gross_dose_kg_acre": round(dosage_acre, 2),
+            "starter_n_credit_kg_ha": starter_n_credit,
+            "split_schedule": split_schedule,
+            "calculation_steps": calc_steps
+        }
 
         # Explanation Facility: Construct clear reasoning narrative
         display_crop = reqs.get("display_name", crop_name.capitalize())
@@ -382,7 +490,9 @@ class InferenceEngine:
             nutrient_gaps=gaps,
             ideal_benchmarks=reqs,
             top_crops=top_candidates,
-            agronomic_tips=tips
+            agronomic_tips=tips,
+            dosage_breakdown=dosage_breakdown,
+            calculation_steps=calc_steps
         )
 
     def recommend_crop_rotation(
@@ -392,7 +502,9 @@ class InferenceEngine:
         temperature: float,
         harvest_gap_days: int,
         previous_crop: str = "Rice",
-        ph: float = 6.5
+        ph: float = 6.5,
+        irrigation_type: str = "Assured (Canal / Tube-well)",
+        disease_history: str = "None / Healthy Field"
     ) -> Dict[str, Any]:
         """
         Recommends optimal crop based on:
@@ -401,6 +513,8 @@ class InferenceEngine:
         3. Ambient Temperature
         4. Time between two crop harvesting (harvest gap / duration window in days)
         5. Crop rotation synergy (replenishing nutrients after previous crop)
+        6. Water availability & irrigation assurance
+        7. Preceding crop disease & pest disruption
         """
         candidates = []
         normalized_soil = soil_condition.strip().capitalize() if soil_condition else "Loamy"
@@ -510,6 +624,35 @@ class InferenceEngine:
                     f"Crop Rotation Synergy: Planting {req['display_name']} takes maximum advantage of residual nitrogen fixed by previous {previous_crop}."
                 )
 
+            # 6. IRRIGATION & WATER REQUIREMENT COMPATIBILITY
+            water_demand = req.get("ideal_rainfall_mm", 100)
+            irrig = (irrigation_type or "").lower()
+            if "rainfed" in irrig or "dryland" in irrig or "limited" in irrig:
+                if water_demand >= 150 or crop_id in ["rice", "banana"]:
+                    score -= 30.0
+                    warnings.append(f"Water Stress: {req['display_name']} demands ~{water_demand} mm water; high yield loss risk under rainfed conditions.")
+                elif crop_id in ["mothbeans", "mungbean", "chickpea", "cotton"]:
+                    score += 14.0
+                    reasons.append(f"Moisture Resilience: Well-adapted to rainfed/dryland cultivation with low water requirement (~{water_demand} mm).")
+            else:
+                if water_demand >= 120:
+                    score += 8.0
+                    reasons.append(f"Irrigation Match: Assured irrigation supports full crop canopy expansion and yield potential.")
+
+            # 7. PRECEDING CROP PEST & DISEASE DISRUPTION
+            dh = (disease_history or "").lower()
+            if "wilt" in dh or "root rot" in dh or "fungal" in dh:
+                if crop_id in ["chickpea", "pigeonpeas", "cotton"]:
+                    score -= 22.0
+                    warnings.append(f"Disease Vulnerability: Field history of fungal wilt threatens {req['display_name']}. Treat seed with Trichoderma viride or rotate with non-host cereal.")
+                elif crop_id in ["maize", "rice", "mungbean", "wheat"]:
+                    score += 12.0
+                    reasons.append(f"Disease Cycle Disruption: Non-host crop {req['display_name']} suppresses soil-borne fungal wilt inoculum.")
+            elif "nematode" in dh:
+                if crop_id in ["mungbean", "mustard"]:
+                    score += 10.0
+                    reasons.append(f"Pest Management: Disrupts root-knot nematode cycle naturally.")
+
             final_score = max(5.0, min(99.5, round(score, 1)))
 
             candidates.append({
@@ -578,6 +721,12 @@ class InferenceEngine:
                 f"• **Soil Condition:** {normalized_soil} soil provides optimal moisture retention and root aeration for {top_choice['display_name']}."
             )
 
+        # 4. Irrigation & Disease Notes
+        if "rainfed" in (irrigation_type or "").lower():
+            explanation_lines.append(f"• **Water Management (Rainfed):** Cultivation is planned under rainfed/dryland conditions; selected cultivar is verified for drought endurance.")
+        if "wilt" in (disease_history or "").lower():
+            explanation_lines.append(f"• **Disease Precaution:** Previous field wilt history noted; non-host rotation helps cleanse fungal inoculum from topsoil.")
+
         full_narrative = "\n\n".join(explanation_lines)
 
         return {
@@ -591,7 +740,9 @@ class InferenceEngine:
                 "temperature": temperature,
                 "harvest_gap_days": harvest_gap,
                 "previous_crop": previous_crop,
-                "ph": ph
+                "ph": ph,
+                "irrigation_type": irrigation_type,
+                "disease_history": disease_history
             }
         }
 

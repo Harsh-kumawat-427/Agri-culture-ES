@@ -40,12 +40,13 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="/"><i class="bi bi-house-door me-1"></i> Home</a></li>
-          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> AI Soil & Crop Advisor</a></li>
-          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> Seasonal & Crop Rotation</a></li>
-          <li><a href="/knowledge" class="active"><i class="bi bi-journal-bookmark me-1"></i> Knowledge Base</a></li>
-          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> Consultation Records</a></li>
-          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> Test Soil</a></li>
+          <li><a href="/"><i class="bi bi-house-door me-1"></i> <span data-i18n="nav_home">Home</span></a></li>
+          <li><a href="/advisor"><i class="bi bi-cpu me-1"></i> <span data-i18n="nav_advisor">AI Soil & Crop Advisor</span></a></li>
+          <li><a href="/rotation"><i class="bi bi-calendar2-range me-1"></i> <span data-i18n="nav_rotation">Seasonal & Crop Rotation</span></a></li>
+          <li><a href="/knowledge" class="active"><i class="bi bi-journal-bookmark me-1"></i> <span data-i18n="nav_knowledge">Knowledge Base</span></a></li>
+          <li><a href="/history"><i class="bi bi-clock-history me-1"></i> <span data-i18n="nav_records">Consultation Records</span></a></li>
+          <li><button type="button" class="btn btn-sm btn-outline-success ms-lg-2 d-inline-flex align-items-center" onclick="toggleLanguage()" title="Switch Language / भाषा बदलें"><i class="bi bi-translate me-1"></i><span id="lang-label">हिन्दी</span></button></li>
+          <li><a href="/advisor" class="btn btn-sm btn-agri ms-2 text-white"><i class="bi bi-magic me-1"></i> <span data-i18n="nav_new_test">Test Soil</span></a></li>
         </ul>
       </nav>
 
@@ -192,6 +193,16 @@
             <tr>
               <td data-label="Rule ID" class="fw-bold text-success">
                 <code>{{ rule.rule_id }}</code>
+                {% if rule.rule_name %}
+                <div class="fw-bold text-dark mt-1" style="font-size: 11.5px;">{{ rule.rule_name }}</div>
+                {% endif %}
+                {% if rule.agronomic_source %}
+                <div class="mt-1">
+                  <span class="badge bg-light text-success border text-wrap text-start" style="font-size: 10px;" title="{{ rule.agronomic_source }}">
+                    <i class="bi bi-bank2 me-1"></i>{{ rule.agronomic_source.split(' - ')[0] if ' - ' in rule.agronomic_source else rule.agronomic_source }}
+                  </span>
+                </div>
+                {% endif %}
               </td>
               <td data-label="Condition">
                 <i class="bi bi-arrow-right-short text-success fw-bold"></i>
@@ -202,6 +213,11 @@
                   {{ rule.suggested_fertilizer }}
                 </span>
                 <div class="small text-muted">{{ rule.advice }}</div>
+                {% if rule.safety_precaution %}
+                <div class="small text-danger-emphasis bg-warning-subtle p-1 px-2 rounded mt-1" style="font-size: 11px;">
+                  <i class="bi bi-shield-exclamation me-1 text-danger"></i><strong>Safety Precaution:</strong> {{ rule.safety_precaution }}
+                </div>
+                {% endif %}
               </td>
               <td data-label="Target Nutrient">
                 <span class="badge bg-light text-dark border">{{ rule.target_nutrient }}</span>
@@ -272,17 +288,30 @@
               </div>
               <div class="col-4">
                 <div class="p-2 bg-white rounded border">
-                  <div class="small text-muted" style="font-size: 11px;">Phosphorus (P)</div>
-                  <div class="fw-bold text-dark">{{ fert.p_percent }}%</div>
+                  <div class="small text-muted" style="font-size: 11px;">Phosphorus</div>
+                  <div class="fw-bold text-dark">{% if fert.p2o5_percent %}{{ fert.p2o5_percent }}% P₂O₅{% else %}{{ fert.p_percent }}% P{% endif %}</div>
+                  {% if fert.elemental_p_percent %}<div class="text-muted" style="font-size: 9.5px;">({{ fert.elemental_p_percent }}% P)</div>{% endif %}
                 </div>
               </div>
               <div class="col-4">
                 <div class="p-2 bg-white rounded border">
-                  <div class="small text-muted" style="font-size: 11px;">Potassium (K)</div>
-                  <div class="fw-bold text-dark">{{ fert.k_percent }}%</div>
+                  <div class="small text-muted" style="font-size: 11px;">Potassium</div>
+                  <div class="fw-bold text-dark">{% if fert.k2o_percent %}{{ fert.k2o_percent }}% K₂O{% else %}{{ fert.k_percent }}% K{% endif %}</div>
+                  {% if fert.elemental_k_percent %}<div class="text-muted" style="font-size: 9.5px;">({{ fert.elemental_k_percent }}% K)</div>{% endif %}
                 </div>
               </div>
             </div>
+
+            {% if fert.starter_n_percent and fert.starter_n_percent > 0 %}
+            <div class="alert alert-info py-1 px-2 small mb-2 text-start" style="font-size: 11px;">
+              <i class="bi bi-info-circle me-1"></i><strong>Starter N Credit:</strong> Provides {{ fert.starter_n_percent }}% N alongside Phosphorus.
+            </div>
+            {% endif %}
+            {% if fert.split_schedule %}
+            <div class="small text-muted mb-2" style="font-size: 11px;">
+              <strong><i class="bi bi-clock-history me-1 text-success"></i>Schedule:</strong> {{ fert.split_schedule }}
+            </div>
+            {% endif %}
 
             <p class="small text-muted mb-0">
               {{ fert.description }}
@@ -319,6 +348,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/static/assets/js/main.js?v=2.2"></script>
+  <script src="/static/assets/js/i18n.js?v=2.2"></script>
 
   <script>
     function filterCrops() {

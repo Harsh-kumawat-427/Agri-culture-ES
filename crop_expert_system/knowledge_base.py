@@ -20,7 +20,10 @@ class Rule:
     suggested_fertilizer: str
     advice: str
     priority: int
-    rule_type: str = "deficiency"  # deficiency, soil_ph, balanced
+    rule_type: str = "deficiency"  # deficiency, soil_ph, balanced, toxicity, climate, micronutrient, rotation, organic
+    rule_name: str = ""
+    agronomic_source: str = "ICAR & State Agricultural Universities"
+    safety_precaution: str = ""
 
 class KnowledgeBase:
     """Holds agronomic rules and nutrient benchmark requirements for crops."""
@@ -432,7 +435,7 @@ class KnowledgeBase:
         }
 
     def _init_fertilizers(self) -> Dict[str, Dict[str, Any]]:
-        """Fertilizer composition details, nutrient percentage, and typical application forms."""
+        """Fertilizer composition details, nutrient percentages, oxide/elemental fractions, and typical application forms."""
         return {
             "Urea": {
                 "name": "Urea",
@@ -441,16 +444,27 @@ class KnowledgeBase:
                 "n_percent": 46.0,
                 "p_percent": 0.0,
                 "k_percent": 0.0,
-                "description": "High-concentration nitrogenous granular fertilizer for vigorous vegetative and canopy growth."
+                "p2o5_percent": 0.0,
+                "k2o_percent": 0.0,
+                "elemental_p_percent": 0.0,
+                "elemental_k_percent": 0.0,
+                "description": "High-concentration nitrogenous granular fertilizer (46% N). Supplies 46 kg Nitrogen per 100 kg product.",
+                "split_schedule": "Apply 50% basal at sowing, 25% at tillering, and 25% at panicle/flowering initiation."
             },
             "DAP": {
-                "name": "DAP (Di-Ammonium Phosphate)",
+                "name": "DAP (Di-Ammonium Phosphate 18-46-0)",
                 "formula": "(NH4)2HPO4",
                 "primary_nutrient": "P",
                 "n_percent": 18.0,
                 "p_percent": 46.0,
                 "k_percent": 0.0,
-                "description": "Widely used phosphatic fertilizer providing immediate root stimulation and starter nitrogen."
+                "p2o5_percent": 46.0,
+                "k2o_percent": 0.0,
+                "elemental_p_percent": 20.07,  # P2O5 * 0.4364
+                "elemental_k_percent": 0.0,
+                "description": "Commercial grade 18-46-0: Supplies 46% P₂O₅ (equivalent to 20.1% elemental P) plus 18% starter Nitrogen.",
+                "starter_n_credit": 0.18,
+                "split_schedule": "Apply 100% as basal dressing placed 3-5 cm below and beside the seed zone at sowing."
             },
             "SSP": {
                 "name": "SSP (Single Super Phosphate)",
@@ -459,25 +473,40 @@ class KnowledgeBase:
                 "n_percent": 0.0,
                 "p_percent": 16.0,
                 "k_percent": 0.0,
-                "description": "Supplies water-soluble phosphate plus 11% sulphur and 19% calcium for root development."
+                "p2o5_percent": 16.0,
+                "k2o_percent": 0.0,
+                "elemental_p_percent": 6.98,  # 16 * 0.4364
+                "elemental_k_percent": 0.0,
+                "description": "Supplies 16% water-soluble P₂O₅ plus 11-12% Sulphur and 19-21% Calcium for root and nodule development.",
+                "split_schedule": "Full basal application incorporated into the soil during final tillage."
             },
             "MOP": {
-                "name": "MOP (Muriate of Potash / Potassium Chloride)",
+                "name": "MOP (Muriate of Potash 0-0-60)",
                 "formula": "KCl",
                 "primary_nutrient": "K",
                 "n_percent": 0.0,
                 "p_percent": 0.0,
                 "k_percent": 60.0,
-                "description": "Standard potassic fertilizer enhancing drought resistance, disease tolerance, and crop yield quality."
+                "p2o5_percent": 0.0,
+                "k2o_percent": 60.0,
+                "elemental_p_percent": 0.0,
+                "elemental_k_percent": 49.8,  # K2O * 0.8301
+                "description": "Commercial grade 0-0-60: Supplies 60% K₂O (equivalent to 49.8% elemental K) for osmotic regulation and disease resistance.",
+                "split_schedule": "Apply 50% basal and 50% at flowering/grain-fill stage in light soils, or 100% basal in heavy clay soils."
             },
             "NPK 19:19:19": {
-                "name": "NPK 19:19:19",
+                "name": "NPK 19:19:19 (Complex 1:1:1)",
                 "formula": "Complex 1:1:1",
                 "primary_nutrient": "NPK",
                 "n_percent": 19.0,
                 "p_percent": 19.0,
                 "k_percent": 19.0,
-                "description": "Fully balanced multi-nutrient complex for simultaneous nitrogen, phosphorus, and potassium correction."
+                "p2o5_percent": 19.0,
+                "k2o_percent": 19.0,
+                "elemental_p_percent": 8.29,
+                "elemental_k_percent": 15.77,
+                "description": "Balanced multi-nutrient complex delivering 19% N, 19% P₂O₅, and 19% K₂O for multi-nutrient deficient soils.",
+                "split_schedule": "Apply as basal starter fertilizer, followed by crop-specific topdressings."
             },
             "Agricultural Lime": {
                 "name": "Agricultural Lime (Calcium Carbonate)",
@@ -486,219 +515,295 @@ class KnowledgeBase:
                 "n_percent": 0.0,
                 "p_percent": 0.0,
                 "k_percent": 0.0,
-                "description": "Reduces soil acidity, raises pH, and improves microbial activity in soils below pH 5.5."
+                "p2o5_percent": 0.0,
+                "k2o_percent": 0.0,
+                "elemental_p_percent": 0.0,
+                "elemental_k_percent": 0.0,
+                "description": "Ground limestone (CaCO₃) used exclusively for acid soils (pH < 5.5). Neutralizes toxic Al³⁺ and Fe²⁺ ions.",
+                "split_schedule": "Broadcast and incorporate 2-3 weeks prior to sowing with adequate moisture."
             },
             "Agricultural Gypsum": {
-                "name": "Agricultural Gypsum (Calcium Sulfate)",
+                "name": "Agricultural Gypsum (Calcium Sulfate Dihydrate)",
                 "formula": "CaSO4·2H2O",
                 "primary_nutrient": "pH Buffer / Sulphur",
                 "n_percent": 0.0,
                 "p_percent": 0.0,
                 "k_percent": 0.0,
-                "description": "Reclaims sodic/alkaline soils above pH 8.0 by displacing excess sodium with calcium."
+                "p2o5_percent": 0.0,
+                "k2o_percent": 0.0,
+                "elemental_p_percent": 0.0,
+                "elemental_k_percent": 0.0,
+                "description": "Agricultural gypsum (23% Ca, 18% S). Specifically amends sodic / alkali soils (pH > 8.0, high ESP) by displacing exchangeable Na⁺ with Ca²⁺.",
+                "split_schedule": "Broadcast in dry soil, disc-plough to 10 cm, followed by heavy ponding/leaching with good quality irrigation water."
             }
         }
 
     def _init_rules(self) -> List[Rule]:
-        """Loads canonical production rules as designated in project specification."""
+        """Loads canonical production rules as designated in project specification with agronomic citations."""
         return [
             Rule(
                 rule_id="R01_ALL_DEFICIENT",
+                rule_name="Compound NPK Basal Correction",
                 condition_desc="Nitrogen, Phosphorus, and Potassium are all significantly below crop benchmarks",
                 target_nutrient="NPK",
                 suggested_fertilizer="NPK 19:19:19",
-                advice="Soil shows concurrent multi-nutrient deficiency. Apply balanced NPK 19:19:19 as basal dressing.",
+                advice="Soil shows concurrent multi-nutrient deficiency. Apply balanced NPK 19:19:19 as basal dressing placed 4-5 cm below seed depth.",
                 priority=100,
-                rule_type="balanced"
+                rule_type="balanced",
+                agronomic_source="ICAR Integrated Plant Nutrient Supply System (IPNS)",
+                safety_precaution="Incorporate thoroughly into topsoil; do not broadcast on dry soil without irrigation."
             ),
             Rule(
                 rule_id="R02_N_LOW",
+                rule_name="Split Nitrogen Vegetative Topdressing",
                 condition_desc="Soil Nitrogen (N) is below the recommended minimum threshold for the crop",
                 target_nutrient="N",
                 suggested_fertilizer="Urea",
-                advice="Nitrogen deficiency detected. Apply Urea in split doses to accelerate leaf chlorophyll and vegetative biomass.",
+                advice="Nitrogen deficiency detected. Apply prilled Urea (46% N) in 2-3 split applications: 50% basal at sowing, 25% at active tillering (3-4 weeks), and 25% at panicle/flowering initiation.",
                 priority=80,
-                rule_type="deficiency"
+                rule_type="deficiency",
+                agronomic_source="IISS (Indian Institute of Soil Science) Bhopal",
+                safety_precaution="Never apply entire nitrogen dose at once; avoid urea broadcasting in waterlogged fields to minimize volatilization and leaching."
             ),
             Rule(
                 rule_id="R03_P_LOW",
+                rule_name="Starter Phosphate Root Establishment (P₂O₅ & Starter N)",
                 condition_desc="Soil Phosphorus (P) is below the crop's minimum root establishment requirement",
                 target_nutrient="P",
                 suggested_fertilizer="DAP",
-                advice="Phosphorus deficiency detected. Apply DAP or SSP close to root zone to spur deep rooting and early flower initiation.",
+                advice="Phosphorus deficiency detected. Apply DAP (18-46-0: 46% P₂O₅ equivalent, 20.1% elemental P) banded 3-5 cm below seed zone. DAP also contributes 18 kg starter N per 100 kg product applied.",
                 priority=75,
-                rule_type="deficiency"
+                rule_type="deficiency",
+                agronomic_source="TNAU Agritech Nutrient Portal / ICAR Guidelines",
+                safety_precaution="Apply at sowing near roots; phosphorus has low mobility in soil and does not move downward with irrigation."
             ),
             Rule(
                 rule_id="R04_K_LOW",
+                rule_name="Potash Osmotic & Stalk Reinforcement (K₂O Equivalent)",
                 condition_desc="Soil Potassium (K) is below the crop's physiological resilience threshold",
                 target_nutrient="K",
                 suggested_fertilizer="MOP",
-                advice="Potassium deficit found. Apply MOP (Muriate of Potash) to reinforce stalk strength, fruit filling, and osmotic drought resistance.",
+                advice="Potassium deficit found. Apply MOP (Muriate of Potash 0-0-60: 60% K₂O equivalent, 49.8% elemental K) to reinforce stalk strength, regulate stomatal closure, and enhance osmotic drought tolerance.",
                 priority=70,
-                rule_type="deficiency"
+                rule_type="deficiency",
+                agronomic_source="International Potash Institute (IPI) & ICAR Agronomy",
+                safety_precaution="In light sandy soils, split into 50% basal and 50% flowering to prevent leaching losses."
             ),
             Rule(
                 rule_id="R05_PH_ACIDIC",
-                condition_desc="Soil pH is below 5.5 (strongly acidic)",
+                rule_name="Acid Soil Neutralization & Liming",
+                condition_desc="Soil pH is below 5.5 (strongly acidic with toxic Al³⁺ / Fe²⁺ activity)",
                 target_nutrient="pH",
                 suggested_fertilizer="Agricultural Lime",
-                advice="Acidic soil condition (pH < 5.5) inhibits phosphorus and cation uptake. Broadcast agricultural lime (CaCO3) 2-3 weeks prior to sowing.",
+                advice="Acidic soil condition (pH < 5.5) locks phosphorus into insoluble iron/aluminum phosphates. Broadcast Agricultural Lime (CaCO₃) at 200-500 kg/ha and incorporate into soil 2-3 weeks prior to sowing.",
                 priority=90,
-                rule_type="soil_ph"
+                rule_type="soil_ph",
+                agronomic_source="ICAR Research Complex for NEH Region / Acid Soil Bulletin",
+                safety_precaution="Lime should be finely powdered and worked into top 15 cm soil with adequate soil moisture."
             ),
             Rule(
                 rule_id="R06_PH_ALKALINE",
-                condition_desc="Soil pH is above 8.0 (strongly alkaline / sodic)",
+                rule_name="Sodic / Alkaline Soil Gypsum Reclamation",
+                condition_desc="Soil pH is above 8.0 with sodic condition (High Exchangeable Sodium Percentage / ESP)",
                 target_nutrient="pH",
                 suggested_fertilizer="Agricultural Gypsum",
-                advice="Alkaline/saline condition (pH > 8.0) locks iron and zinc. Incorporate Gypsum or elemental sulphur to lower soil pH and leach sodium.",
+                advice="Alkali/sodic condition (pH > 8.0, high ESP) disperses soil aggregates and limits root respiration. Incorporate Agricultural Gypsum (CaSO₄·2H₂O: 18% S, 23% Ca) to displace exchangeable Na⁺ with Ca²⁺, followed by deep flushing/leaching with good water.",
                 priority=90,
-                rule_type="soil_ph"
+                rule_type="soil_ph",
+                agronomic_source="CSSRI (Central Soil Salinity Research Institute) Karnal",
+                safety_precaution="Ensure adequate subsurface drainage before ponding water; do not confuse saline soil (high EC) with sodic soil (high ESP/pH)."
             ),
             Rule(
                 rule_id="R07_BALANCED_SOIL",
+                rule_name="Balanced Maintenance & Soil Health Sustenance",
                 condition_desc="All nutrients (N, P, K) and pH meet or exceed crop requirements",
                 target_nutrient="None",
                 suggested_fertilizer="No Chemical Fertilizer Required",
-                advice="Soil nutrient profile is optimal for this crop. Maintain soil organic matter with farmyard compost (FYM) or green manuring.",
+                advice="Soil nutrient profile is optimal for this crop. Avoid unnecessary chemical applications. Maintain soil organic matter with well-rotted farmyard manure (FYM 5 t/ha) or bio-compost.",
                 priority=50,
-                rule_type="balanced"
+                rule_type="balanced",
+                agronomic_source="National Project on Management of Soil Health & Fertility",
+                safety_precaution="Continue regular annual soil health testing to detect nutrient drawdowns early."
             ),
             Rule(
                 rule_id="R08_NP_DEFICIENT",
+                rule_name="Dual Nitrogen & Phosphorus Starter Balancing",
                 condition_desc="Nitrogen and Phosphorus are both deficient while Potassium is adequate",
                 target_nutrient="NP",
                 suggested_fertilizer="DAP (18-46-0) + Topdress Urea",
-                advice="Dual N & P deficiency detected. Apply Diammonium Phosphate (DAP) at basal sowing to stimulate early root vigor, followed by topdressed Urea.",
+                advice="Dual N & P deficiency detected. Apply DAP at basal sowing (supplies both P₂O₅ and starter N), followed by a scheduled Urea topdressing at 30 days after germination.",
                 priority=85,
-                rule_type="deficiency"
+                rule_type="deficiency",
+                agronomic_source="ICAR Cereal Agronomy Protocols",
+                safety_precaution="Account for DAP's 18% N content when calculating topdress Urea dose to prevent excessive vegetative growth."
             ),
             Rule(
                 rule_id="R09_NK_DEFICIENT",
+                rule_name="Dual Nitrogen & Potassium Vegetative Reinforcement",
                 condition_desc="Nitrogen and Potassium are both deficient while Phosphorus is adequate",
                 target_nutrient="NK",
                 suggested_fertilizer="Potassium Nitrate (13-0-45) or Urea + MOP blend",
-                advice="Dual N & K deficiency detected. Apply split Urea for vegetative chlorophyll and MOP to strengthen stem lodging resistance.",
+                advice="Dual N & K deficiency detected. Apply split Urea for vegetative chlorophyll synthesis and MOP (60% K₂O) to ensure strong vascular stalk development and drought resistance.",
                 priority=85,
-                rule_type="deficiency"
+                rule_type="deficiency",
+                agronomic_source="Fertiliser Association of India (FAI) Technical Bulletin",
+                safety_precaution="Do not mix urea and MOP too far in advance in humid weather as the blend is hygroscopic."
             ),
             Rule(
                 rule_id="R10_PK_DEFICIENT",
+                rule_name="Legume Root Nodulation & Pod Filling (P & K)",
                 condition_desc="Phosphorus and Potassium are both deficient while Nitrogen is adequate (common in legumes)",
                 target_nutrient="PK",
                 suggested_fertilizer="Monopotassium Phosphate (MKP 00:52:34) / SSP + MOP",
-                advice="Dual P & K deficit found. Apply Single Super Phosphate (SSP) with MOP prior to flowering to spur root nodulation and flower retention.",
+                advice="Dual P & K deficit found. Apply Single Super Phosphate (SSP) with MOP prior to flowering to spur root nodulation and flower retention. SSP also provides 11% crucial Sulphur.",
                 priority=85,
-                rule_type="deficiency"
+                rule_type="deficiency",
+                agronomic_source="Indian Society of Soil Science & Pulses Research (IIPR) Kanpur",
+                safety_precaution="In pulses, ensure adequate soil moisture at flowering when phosphorus demand peaks."
             ),
             Rule(
                 rule_id="R11_N_EXCESS",
+                rule_name="Nitrogen Luxury Consumption & Toxicity Mitigation",
                 condition_desc="Soil Nitrogen exceeds maximum safe benchmark by > 25% (Nitrogen luxury consumption)",
                 target_nutrient="N_Toxicity",
                 suggested_fertilizer="Withhold Nitrogen Fertilizers / Leach with Water",
-                advice="Excessive soil nitrogen leads to succulent weak stems, pest/aphid vulnerability, and delayed maturity. Withhold nitrogen fertilizers immediately.",
+                advice="Excessive soil nitrogen leads to succulent weak stems, severe lodging, delayed maturity, and heavy pest/aphid infestation. Withhold all nitrogenous fertilizers immediately and irrigate to dilute nitrate concentration.",
                 priority=78,
-                rule_type="toxicity"
+                rule_type="toxicity",
+                agronomic_source="Directorate of Plant Protection, Quarantine & Storage (DPPQS)",
+                safety_precaution="Monitor closely for blast in rice or rust in wheat, which proliferate rapidly under excess nitrogen."
             ),
             Rule(
                 rule_id="R12_P_EXCESS",
-                condition_desc="Soil Phosphorus is excessively high (> 30% above maximum benchmark)",
+                rule_name="Phosphate-Induced Zinc Lockout & Antagonism Management",
+                condition_desc="Soil Phosphorus is excessively high (> 30% above maximum benchmark), inducing Zinc uptake lockout",
                 target_nutrient="P_Toxicity",
                 suggested_fertilizer="Chelated Zinc (Zn-EDTA) Foliar Spray",
-                advice="Excess phosphorus induces iron and zinc ion lockout, causing interveinal leaf chlorosis. Avoid phosphatic fertilizers and spray Chelated Zinc.",
+                advice="High available phosphorus inhibits ionic zinc absorption by roots through phosphate-zinc antagonism, causing interveinal leaf chlorosis. Withhold all phosphatic fertilizers and apply Chelated Zinc (Zn-EDTA @ 0.5–1.0 g/L water) as a foliar rescue spray.",
                 priority=74,
-                rule_type="toxicity"
+                rule_type="toxicity",
+                agronomic_source="IISS Bhopal Micronutrient Antagonism Advisory",
+                safety_precaution="Do not soil-apply inorganic zinc with phosphate fertilizers together as insoluble zinc phosphate forms."
             ),
             Rule(
                 rule_id="R13_DROUGHT_HEAT_STRESS",
+                rule_name="Thermal & Moisture Stress Osmoregulation (Foliar KNO₃)",
                 condition_desc="Precipitation < 60 mm and Ambient Temperature > 30°C (Moisture Deficit & Thermal Stress)",
                 target_nutrient="Climate_Stress",
                 suggested_fertilizer="Foliar Potassium (1% KNO3) & Organic Straw Mulch",
-                advice="High heat and low rainfall trigger rapid moisture loss. Spray 1% Potassium Nitrate or MOP to close stomata and spread organic crop mulch.",
+                advice="High temperature and moisture deficit trigger stomatal conductance loss and leaf scorching. Spray 1.0% to 1.5% Potassium Nitrate (KNO₃: 10-15 g/L water) in early morning or late afternoon to regulate stomatal transpiration, and spread crop residue mulch (4-5 t/ha).",
                 priority=92,
-                rule_type="climate"
+                rule_type="climate",
+                agronomic_source="CRIDA (Central Research Institute for Dryland Agriculture) Hyderabad",
+                safety_precaution="Never spray foliar salts during hot midday sun (> 35°C) to prevent osmotic leaf burn."
             ),
             Rule(
                 rule_id="R14_WATERLOGGING_EXCESS_RAIN",
+                rule_name="Waterlogging Aeration & Post-Drainage Nitrate Recovery",
                 condition_desc="Precipitation > 220 mm with heavy soil (Waterlogging & Leaching Risk)",
                 target_nutrient="Drainage_Nitrogen",
                 suggested_fertilizer="Ridge & Furrow Drainage + Post-Drainage Urea",
-                advice="Excess rainfall risks root asphyxiation and nitrogen denitrification. Create field drainage trenches and apply foliar Urea post-drainage.",
+                advice="Excessive rainfall causes root zone waterlogging, oxygen starvation (hypoxia), and nitrogen leaching/denitrification. Create field drainage trenches immediately. Do not fertilize standing water; apply a light split of Urea (20-25 kg/ha) or 2% foliar urea only after excess water recedes.",
                 priority=91,
-                rule_type="climate"
+                rule_type="climate",
+                agronomic_source="Directorate of Water Management / ICAR Rainfed Agriculture",
+                safety_precaution="Prioritize surface drainage before any fertilizer application; roots cannot absorb nutrients without soil oxygen."
             ),
             Rule(
                 rule_id="R15_COLD_CHILLING_STRESS",
+                rule_name="Frost Protection & Latent Heat Management",
                 condition_desc="Ambient Temperature < 15°C during critical growth stages (Frost & Chilling Risk)",
                 target_nutrient="Thermal_Stress",
                 suggested_fertilizer="Potassium Silicate Foliar Spray & Light Evening Irrigation",
-                advice="Low temperature (< 15°C) slows root cation uptake. Provide light evening irrigation and spray potassium silicate to protect cell membranes.",
+                advice="Low ambient temperature (< 15°C) slows root cation uptake and threatens frost injury in sensitive crops (Mustard, Potato, Gram). Provide light evening irrigation to raise soil thermal mass and release latent heat during freezing hours, and spray 0.15% potassium silicate.",
                 priority=88,
-                rule_type="climate"
+                rule_type="climate",
+                agronomic_source="IMD Agro-Meteorological Advisory Service & ICAR",
+                safety_precaution="Irrigation must be light; avoid water stagnation in fields during cold spells."
             ),
             Rule(
                 rule_id="R16_SULPHUR_DEFICIT_OILSEEDS",
+                rule_name="Oilseed & Pulse Sulphur Nutrition (Glucosinolates & Protein)",
                 condition_desc="Oilseed or pulse crop planted with low fertility (Sulphur requirement for oil/protein)",
                 target_nutrient="Sulphur",
                 suggested_fertilizer="Agricultural Gypsum or Bentonite Sulphur (25 kg/ha)",
-                advice="Oilseed and pulse crops require high sulphur for oil synthesis and nodule protein. Apply 25 kg/ha agricultural gypsum or elemental sulphur.",
+                advice="Oilseed crops (Mustard, Groundnut, Soybean) and pulses require high sulphur for oil synthesis and protein amino acids. Apply 20-30 kg S/ha via Bentonite Sulphur (90% S @ 25 kg/ha) or Agricultural Gypsum (18% S @ 150 kg/ha) as basal dressing.",
                 priority=76,
-                rule_type="micronutrient"
+                rule_type="micronutrient",
+                agronomic_source="DRMR (Directorate of Rapeseed-Mustard Research) Bharatpur",
+                safety_precaution="Bentonite sulphur requires 1-2 weeks in moist soil to convert to plant-available sulfate (SO₄²⁻)."
             ),
             Rule(
                 rule_id="R17_ZINC_DEFICIENCY_CALCAREOUS",
+                rule_name="Calcareous Soil Zinc Fixation Correction (Khaira / White Bud)",
                 condition_desc="Alkaline / Calcareous soil (pH > 7.8) with high phosphorus (Zinc fixation)",
                 target_nutrient="Zinc",
                 suggested_fertilizer="Zinc Sulphate Heptahydrate (ZnSO4 21%)",
-                advice="High soil pH immobilizes zinc, triggering Khaira disease in paddy or white bud in maize. Broadcast 25 kg/ha Zinc Sulphate or spray 0.5% ZnSO4.",
+                advice="High pH and calcium carbonate fix ionic zinc into insoluble precipitates, causing Khaira disease in paddy or white bud in maize. Broadcast 25 kg/ha Zinc Sulphate (21% Zn) as basal soil dressing, or spray 0.5% ZnSO₄ neutralized with 0.25% lime at 25 and 40 days.",
                 priority=82,
-                rule_type="micronutrient"
+                rule_type="micronutrient",
+                agronomic_source="ICAR All India Coordinated Research Project on Micronutrients",
+                safety_precaution="Always neutralize foliar zinc sulphate with slaked lime to prevent leaf scorching."
             ),
             Rule(
                 rule_id="R18_PULSE_ROTATION_SYNERGY",
+                rule_name="Symbiotic Rhizobium Inoculation & Nitrogen Recovery",
                 condition_desc="Rotation following high-nitrogen cereal crop (Rice, Wheat, Maize)",
                 target_nutrient="Soil_Regeneration",
                 suggested_fertilizer="Rhizobium Bio-fertilizer Seed Inoculation",
-                advice="Continuous cereal farming exhausts soil nitrogen. Inoculate legume seeds with Rhizobium culture to fix 35-50 kg/ha atmospheric nitrogen.",
+                advice="Monoculture cereal farming rapidly depletes soil nitrogen and compacts structure. Treat legume seeds with Rhizobium biofertilizer culture (200 g/10 kg seed) to stimulate root nodules capable of fixing 35-50 kg/ha atmospheric nitrogen for following crops.",
                 priority=86,
-                rule_type="rotation"
+                rule_type="rotation",
+                agronomic_source="Indian Institute of Pulses Research (IIPR) Kanpur",
+                safety_precaution="Keep inoculated seeds in shade; do not mix biofertilizers directly with chemical fungicides or insecticides without a 24h gap."
             ),
             Rule(
                 rule_id="R19_SHORT_GAP_CATCH_CROP",
+                rule_name="Short Fallow Window Catch Crop Starter Formulation",
                 condition_desc="Fallow harvest gap between two main crops is short (60 - 85 days)",
                 target_nutrient="Harvest_Window",
                 suggested_fertilizer="Starter DAP (18-46-0) for Fast Catch Crop",
-                advice="Short fallow gap requires quick-maturing catch crops (Mungbean, Cowpea, Mothbeans). Apply starter DAP to accelerate early flowering.",
+                advice="Short fallow gap (60-85 days) mandates extra-early catch crops (Mungbean, Cowpea, Mothbeans). Apply starter DAP (50-60 kg/ha) at sowing to rapidly develop root architecture and trigger synchronized early flowering within 30 days.",
                 priority=89,
-                rule_type="rotation"
+                rule_type="rotation",
+                agronomic_source="ICAR Catch-Crop Cropping Systems Research",
+                safety_precaution="Select determinate, early-maturing cultivars (e.g. IPM 02-3 or PDM 139) to guarantee harvest before next season sowing."
             ),
             Rule(
                 rule_id="R20_ORGANIC_CARBON_RESTORATION",
+                rule_name="Soil Organic Carbon (SOC) Rebuilding & Biological Health",
                 condition_desc="Soil Nitrogen is critically depleted (< 35 kg/ha) indicating low soil organic matter",
                 target_nutrient="Soil_Carbon",
                 suggested_fertilizer="Well-Decomposed Farmyard Manure (FYM 8-10 t/ha)",
-                advice="Critically low nitrogen indicates depleted soil organic carbon (< 0.4%). Incorporate 8-10 tonnes/ha FYM or compost to rebuild microbial life.",
+                advice="Critically low soil nitrogen (< 35 kg/ha) indicates degraded soil organic carbon (< 0.4%). Incorporate 8-10 tonnes/ha well-decomposed Farmyard Manure (FYM) or vermicompost during final ploughing to rebuild microbial biomass and cation exchange capacity.",
                 priority=84,
-                rule_type="organic"
+                rule_type="organic",
+                agronomic_source="National Centre for Organic and Natural Farming (NCONF)",
+                safety_precaution="Ensure FYM is fully decomposed to prevent weed seed germination and termite infestation."
             ),
             Rule(
                 rule_id="R21_MICRONUTRIENT_BORON_DEFICIT",
+                rule_name="Horticultural Boron Nutrition (Pollen Viability & Fruit Set)",
                 condition_desc="Fruit and horticultural crops in light/leached soils (Boron deficit risk)",
                 target_nutrient="Boron",
                 suggested_fertilizer="Borax (10 kg/ha) or Solubor Foliar Spray (0.1%)",
-                advice="Horticultural crops require boron for pollen viability and fruit setting. Apply 10 kg/ha Borax or spray 0.1% Solubor at flower bud initiation.",
+                advice="Fruit crops (Apple, Pomegranate, Grapes, Papaya) require boron for cell wall pectin, pollen tube germination, and preventing fruit cracking. Apply 10 kg/ha Borax to soil, or spray 0.1% Solubor (1 g/L water) at pre-bloom and fruit set.",
                 priority=72,
-                rule_type="micronutrient"
+                rule_type="micronutrient",
+                agronomic_source="ICAR-Central Institute for Arid Horticulture (CIAH) Bikaner",
+                safety_precaution="The range between boron deficiency and toxicity is narrow; adhere strictly to recommended concentrations."
             ),
             Rule(
                 rule_id="R22_SALINE_SOIL_REMEDY",
-                condition_desc="Saline or sodic soil condition (pH 7.5 - 8.3 with low rainfall / poor drainage)",
+                rule_name="Saline Soil Leaching & Sesbania Green Manure Reclamation",
+                condition_desc="Saline soil condition (High Electrical Conductivity EC > 4 dS/m, pH < 8.2, soluble salts)",
                 target_nutrient="Salinity",
                 suggested_fertilizer="Green Manuring with Dhaincha (Sesbania) + Leaching",
-                advice="High salinity inhibits root water absorption. Sow Sesbania (Dhaincha) green manure at 20 kg/ha seed rate and incorporate into soil at 45 days.",
+                advice="High soluble salt concentration (saline soil: EC > 4 dS/m, pH < 8.2) causes osmotic physiological drought. Provide subsurface drainage trenches and leach soluble salts with clean irrigation water. Sow Dhaincha (Sesbania aculeata @ 25 kg/ha) and incorporate into soil at 45 days to release organic acids and restore permeability. (If soil also has high exchangeable sodium pH > 8.5, gypsum is required).",
                 priority=79,
-                rule_type="soil_ph"
+                rule_type="soil_ph",
+                agronomic_source="CSSRI Salinity Management Protocols & TNAU Soil Science",
+                safety_precaution="Do not add gypsum to purely saline non-sodic soils as it increases unnecessary salt burden."
             )
         ]
 
@@ -738,12 +843,15 @@ class KnowledgeBase:
             "rules": [
                 {
                     "rule_id": r.rule_id,
+                    "rule_name": r.rule_name,
                     "condition": r.condition_desc,
                     "target_nutrient": r.target_nutrient,
                     "fertilizer": r.suggested_fertilizer,
                     "advice": r.advice,
                     "priority": r.priority,
-                    "type": r.rule_type
+                    "type": r.rule_type,
+                    "source": r.agronomic_source,
+                    "safety": r.safety_precaution
                 }
                 for r in self.rules
             ]
